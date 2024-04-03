@@ -1,12 +1,12 @@
-from typing import Tuple
 import customtkinter as ctk
+from tkinter import messagebox
 import cv2
-# import PIL
 from PIL import Image, ImageTk, ImageOps
+from pyzbar.pyzbar import decode
 
 class App(ctk.CTk):
-    def __init__(self, fg_color: str | Tuple[str, str] | None = None, **kwargs):
-        super().__init__(fg_color, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         # settings
         self.title("Notion Book Stock")
@@ -48,15 +48,36 @@ class App(ctk.CTk):
         canvas_height = self.canvas.winfo_height()
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # show current frame
         pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
         self.photo = ImageTk.PhotoImage(
-            image=pil_image.transpose(Image.FLIP_LEFT_RIGHT)
+            # image=pil_image.transpose(Image.FLIP_LEFT_RIGHT)
+            image=pil_image
         )
-
-        # self.photo -> Canvas
         self.canvas.create_image(canvas_width/2, canvas_height/2, image=self.photo)
-
+        
+        # check for ISBN
+        isbn = self.check_isbn(frame)
+        if isbn:
+            print(isbn)
+            messagebox.showinfo(title="Infomation!", message=f"ISBN detected ({isbn})")
+    
         self.after(self.delay, self.update)
+
+    def check_isbn(self, frame):
+        isbn = None
+        for barcode in decode(frame):
+            value = barcode.data.decode('utf-8')
+            if is_valid_ISBN13(value):
+                isbn = value
+        
+        return isbn
+    
+def is_valid_ISBN13(num: int) -> bool:
+    """Function to validate if a given value is ISBN-13."""
+    num_str = str(num)
+    return (num_str[0:3]=="978" or num_str[0:3]=="979")
 
 if __name__ == "__main__":
     app = App()

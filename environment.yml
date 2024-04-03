@@ -1,0 +1,13 @@
+name: app-books
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pillow
+  - pip
+  - python=3.12
+  - pyzbar
+  - pip:
+      - customtkinter
+      - opencv-python
+prefix: /opt/homebrew/anaconda3/envs/app-books
