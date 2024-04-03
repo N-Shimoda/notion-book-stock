@@ -1,7 +1,8 @@
 from typing import Tuple
 import customtkinter as ctk
 import cv2
-import PIL
+# import PIL
+from PIL import Image, ImageTk, ImageOps
 
 class App(ctk.CTk):
     def __init__(self, fg_color: str | Tuple[str, str] | None = None, **kwargs):
@@ -32,10 +33,8 @@ class App(ctk.CTk):
 
     def create_widgets(self):
         # side bar
-        label = ctk.CTkLabel(self.side_frame, text="Hello world.")
-        label.pack()
         button = ctk.CTkButton(self.side_frame, text="Register")
-        button.pack()
+        button.pack(anchor="center")
 
         # right frame
         self.canvas = ctk.CTkCanvas(self.cam_frame)
@@ -45,11 +44,17 @@ class App(ctk.CTk):
         # Get a frame from the video source
         _, frame = self.vcap.read()
 
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        self.photo = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
+        pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
+        self.photo = ImageTk.PhotoImage(
+            image=pil_image.transpose(Image.FLIP_LEFT_RIGHT)
+        )
 
         # self.photo -> Canvas
-        self.canvas.create_image(0, 0, image=self.photo, anchor=ctk.NW)
+        self.canvas.create_image(canvas_width/2, canvas_height/2, image=self.photo)
 
         self.after(self.delay, self.update)
 
