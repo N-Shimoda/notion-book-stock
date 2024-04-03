@@ -4,6 +4,11 @@ import cv2
 from PIL import Image, ImageTk, ImageOps
 from pyzbar.pyzbar import decode
 
+def is_valid_ISBN13(num: int) -> bool:
+    """Function to validate if a given value is ISBN-13."""
+    num_str = str(num)
+    return (num_str[0:3]=="978" or num_str[0:3]=="979")
+
 class App(ctk.CTk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -12,11 +17,10 @@ class App(ctk.CTk):
         self.title("Notion Book Stock")
         self.geometry("920x550")
 
-        # opencv
+        # start video capturing
         self.vcap = cv2.VideoCapture(0)
         self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        print(self.vwidth, self.vheight)
 
         # create GUI
         self.create_frames()
@@ -25,6 +29,7 @@ class App(ctk.CTk):
         self.update()
 
     def create_frames(self):
+        """Method to create frames."""
         self.side_frame = ctk.CTkFrame(self, fg_color="gray")
         self.cam_frame = ctk.CTkFrame(self, width=self.vwidth, height=self.vheight, fg_color="cyan")
 
@@ -74,10 +79,6 @@ class App(ctk.CTk):
         
         return isbn
     
-def is_valid_ISBN13(num: int) -> bool:
-    """Function to validate if a given value is ISBN-13."""
-    num_str = str(num)
-    return (num_str[0:3]=="978" or num_str[0:3]=="979")
 
 if __name__ == "__main__":
     app = App()
