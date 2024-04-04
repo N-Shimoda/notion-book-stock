@@ -6,9 +6,9 @@ dependencies:
   - python=3.12
   - pip
   - requests
+  - numpy
   - pillow
   - pyzbar
   - pip:
       - customtkinter
       - opencv-python
-prefix: /opt/homebrew/anaconda3/envs/app-books

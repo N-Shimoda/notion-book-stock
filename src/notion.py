@@ -123,9 +123,9 @@ if __name__ == "__main__":
         title="卒業論文", 
         published_date="2024-01-31",
         authors=["Naoki Shimoda", "Akihiro Yamamoto"],
-        description='A rigorous and comprehensive textbook covering the major approaches to knowledge graphs, an active and interdisciplinary area within artificial intelligence. The field of knowledge graphs, which allows us to model, process, and derive insights from complex real-world data, has emerged as an active and interdisciplinary area of artificial intelligence over the last decade, drawing on such fields as natural language processing, data mining, and the semantic web. Current projects involve predicting cyberattacks, recommending products, and even gleaning insights from thousands of papers on COVID-19. This textbook offers rigorous and comprehensive coverage of the field. It focuses systematically on the major approaches, both those that have stood the test of time and the latest deep learning methods.',
-        # thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg"
-        thumbnail_link=None
+        description='本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。',
+        thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg"
+        # thumbnail_link=None
     )
 
     # get_page_ids(DATABASE_ID)
