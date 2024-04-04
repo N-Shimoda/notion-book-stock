@@ -3,11 +3,13 @@ import requests
 import json
 import os
 
-DATABASE_ID = "068ea96919534bcf9adba807c9f75833"    # 書籍一覧
+# DATABASE_ID = "068ea96919534bcf9adba807c9f75833"    # 書籍一覧
+DATABASE_ID = "3dacfb355eb34f0b9d127a988539809a"    # books in lab
 
 def get_api_key(name: str) -> str:
     """
     Function to get API key from environment variable.
+    If key was not bounded, this function asks the user to input it.
 
     Parameters
     ----------
@@ -68,13 +70,9 @@ def add_book_info(title, published_date, thumbnail_link):
                 ]
             },
             "出版年": {
-                "rich_text": [
-                    {
-                        "text": {
-                            "content": published_date
-                        }
-                    }
-                ]
+                "date": {
+                    "start": published_date
+                }
             },
         },
     }
@@ -89,4 +87,4 @@ if __name__ == "__main__":
         thumbnail_link="https://m.media-amazon.com/images/I/71llCWZhNfL._AC_UF1000,1000_QL80_.jpg"
     )
 
-    get_page_ids(DATABASE_ID)
+    # get_page_ids(DATABASE_ID)

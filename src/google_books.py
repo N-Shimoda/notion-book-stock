@@ -1,5 +1,5 @@
 import requests
-from notion import add_book_info
+from src.notion import add_book_info
 
 def search_isbn(isbn: int, verbose=False):
     """

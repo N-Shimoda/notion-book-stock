@@ -3,9 +3,10 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - pillow
-  - pip
   - python=3.12
+  - pip
+  - requests
+  - pillow
   - pyzbar
   - pip:
       - customtkinter
