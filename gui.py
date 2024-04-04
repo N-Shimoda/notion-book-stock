@@ -93,17 +93,15 @@ class App(ctk.CTk):
         pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
         self.photo = ImageTk.PhotoImage(
             image=pil_image.transpose(Image.FLIP_LEFT_RIGHT)
-            # image=pil_image
         )
         self.canvas.create_image(canvas_width/2, canvas_height/2, image=self.photo)
         
         # check for ISBN
         isbn = self.check_isbn(frame)
         if isbn:
-            # print(isbn)
-            # messagebox.showinfo(title="Infomation!", message=f"ISBN detected ({isbn})")
-            title, date, thumbnail = search_isbn(isbn)
-            add_book_info(title, date, thumbnail)
+            bookdata = search_isbn(isbn)
+            print(bookdata)
+            add_book_info(**bookdata)
     
         self.after(self.delay, self.update)
 

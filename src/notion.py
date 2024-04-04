@@ -43,12 +43,17 @@ def get_page_ids(database_id):
     with open("barcode/current_books.json", "w") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-def add_book_info(title, published_date, thumbnail_link):
+def add_book_info(
+        isbn: int,
+        title: str, authors: list[str],
+        published_date: str, description: str,
+        thumbnail_link: str
+        ):
     """Function to add book information to given database."""
 
     NOTION_API_KEY = get_api_key("NOTION_API_KEY")
-
     url = "https://api.notion.com/v1/pages"
+
     headers =  {
         "Notion-Version": "2022-06-28",
         "Authorization": "Bearer " + NOTION_API_KEY,
@@ -57,16 +62,18 @@ def add_book_info(title, published_date, thumbnail_link):
 
     payload = {
         "parent": {"database_id": DATABASE_ID},
-        "cover": {
-            "type": "external",
-            "external": {
-                "url": thumbnail_link
-            }
-        },
         "properties": {
+            "ISBN-13": {
+                "number": isbn
+            },
             "名前": {
                 "title": [
                     {"text": {"content": title}}
+                ]
+            },
+            "著者": {
+                "multi_select": [
+                    {"name": n} for n in authors
                 ]
             },
             "出版年": {
@@ -75,7 +82,36 @@ def add_book_info(title, published_date, thumbnail_link):
                 }
             },
         },
+        "children": [
+            {
+                "object": "block",
+                "type": "heading_2",
+                "heading_2": {
+                    "rich_text": [{ "type": "text", "text": { "content": "概要" } }]
+                }
+            },
+            {
+                "object": "block",
+                "type": "paragraph",
+                "paragraph": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": description
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
     }
+
+    if thumbnail_link:
+        payload["cover"] = {
+            "type": "external",
+            "external": {"url": thumbnail_link}
+        }
 
     response = requests.post(url, headers=headers, json=payload)
     print(response)
@@ -83,8 +119,13 @@ def add_book_info(title, published_date, thumbnail_link):
 if __name__ == "__main__":
     
     add_book_info(
-        title="卒業論文", published_date="2024-1-31",
-        thumbnail_link="https://m.media-amazon.com/images/I/71llCWZhNfL._AC_UF1000,1000_QL80_.jpg"
+        isbn=978_0000_0000_00,
+        title="卒業論文", 
+        published_date="2024-01-31",
+        authors=["Naoki Shimoda", "Akihiro Yamamoto"],
+        description='A rigorous and comprehensive textbook covering the major approaches to knowledge graphs, an active and interdisciplinary area within artificial intelligence. The field of knowledge graphs, which allows us to model, process, and derive insights from complex real-world data, has emerged as an active and interdisciplinary area of artificial intelligence over the last decade, drawing on such fields as natural language processing, data mining, and the semantic web. Current projects involve predicting cyberattacks, recommending products, and even gleaning insights from thousands of papers on COVID-19. This textbook offers rigorous and comprehensive coverage of the field. It focuses systematically on the major approaches, both those that have stood the test of time and the latest deep learning methods.',
+        # thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg"
+        thumbnail_link=None
     )
 
     # get_page_ids(DATABASE_ID)

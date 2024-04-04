@@ -1,7 +1,6 @@
 import requests
-from src.notion import add_book_info
 
-def search_isbn(isbn: int, verbose=False):
+def search_isbn(isbn: int, verbose=False)->dict:
     """
     Function to search ISBN value in Google Books.
 
@@ -12,7 +11,7 @@ def search_isbn(isbn: int, verbose=False):
 
     Returns
     -------
-    title, published_date, thumbnail_link: str
+    title, authors, published_date, thumbnail_link
         Information about the book.
     """
     url = "https://www.googleapis.com/books/v1/volumes?q=isbn:{}".format(isbn)
@@ -22,42 +21,37 @@ def search_isbn(isbn: int, verbose=False):
 
     if data["totalItems"] > 0:
         volume_info = data["items"][0]["volumeInfo"]
-        title = volume_info["title"]
-        published_date = volume_info["publishedDate"]
-        thumbnail_link = volume_info["imageLinks"]["thumbnail"]
+        bookdata = dict(
+            isbn            = int(isbn),
+            title           = volume_info["title"],
+            authors         = volume_info["authors"],
+            published_date  = volume_info["publishedDate"],
+        )
+        try:
+            bookdata["description"] = volume_info["description"]
+        except:
+            print("No description found")
+            bookdata["description"] = None
+
+        try:
+            bookdata["thumbnail_link"] = volume_info["imageLinks"]["thumbnail"]
+        except:
+            print("No thumbnail found.")
+            bookdata["thumbnail_link"] = None
 
         if verbose:
-            print("\nISBN: {}".format(isbn))
-            print("\t- " + title)
-            print("\t- " + published_date)
-            print("\t- Thumbnail: {}".format(thumbnail_link))
+            print(bookdata)
 
     else:
-        title, published_date, thumbnail_link = None, None, None
+        bookdata = None
         if verbose:
             raise ValueError("No book was found for ISBN '{}'".format(isbn))
     
-    return title, published_date, thumbnail_link
-
-def cui(isbn: int):
-    """Ask the user if to add a book into Notion database."""
-    # acquire book information
-    title, published_date, thumbnail_link = search_isbn(isbn, verbose=True)
-
-    # show simple dialogue
-    text = input("Are you sure to upload the book to Notion? [y/n]: ")
-    match text:
-        case "y":
-            add_book_info(title, published_date, thumbnail_link)
-            print("Done!")
-        case "n":
-            print("Okay, then.")
-        case _:
-            print("Invarid option was chosen.")
+    return bookdata
 
 
 if __name__ == "__main__":
     
     # add a book into Notion database
     isbn = 9784537214192    # "The Wine"
-    cui(isbn)
+    print(search_isbn(isbn))
