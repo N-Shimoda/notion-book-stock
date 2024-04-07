@@ -1,5 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
+from tkinter import messagebox
 import os
 import cv2
 from PIL import Image, ImageTk, ImageOps
@@ -8,7 +9,7 @@ from src.google_books import search_isbn
 from src.notion import add_book_info
 
 def is_valid_ISBN13(num: int) -> bool:
-    """Function to validate if a given value is ISBN-13."""
+    """Function to validate if a given integer is ISBN-13."""
     num_str = str(num)
     return (num_str[0:3]=="978" or num_str[0:3]=="979")
 
@@ -21,6 +22,7 @@ class App(ctk.CTk):
         self.geometry("920x550")
 
         # variables
+        self.history = []
         self.notion_api_key = self.get_notion_api_key()
         self.radio_val = tk.IntVar(     # variable for radio button (appearance mode)
             value = ["Light", "Dark"].index(ctk.get_appearance_mode())
@@ -97,15 +99,28 @@ class App(ctk.CTk):
         self.canvas.create_image(canvas_width/2, canvas_height/2, image=self.photo)
         
         # check for ISBN
-        isbn = self.check_isbn(frame)
-        if isbn:
+        isbn = self.scan_isbn(frame)
+        
+        # check API call history
+        if isbn in self.history:
+            add_book = messagebox.askyesno("Book already added", "Are you sure to add this book again?")
+        else:
+            add_book = (isbn is not None)
+        
+        # add book data to Notion
+        if add_book:
             bookdata = search_isbn(isbn)
-            print(bookdata)
-            add_book_info(**bookdata)
+            if bookdata:
+                print(bookdata)
+                add_book_info(**bookdata)
+                self.history.append(isbn)
+                messagebox.showinfo(message="Book successfully added to Notion database.")
+            else:
+                messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
     
         self.after(self.delay, self.update)
 
-    def check_isbn(self, frame):
+    def scan_isbn(self, frame):
         isbn = None
         for barcode in decode(frame):
             value = barcode.data.decode('utf-8')

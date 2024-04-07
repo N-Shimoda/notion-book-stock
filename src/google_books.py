@@ -1,6 +1,16 @@
 import requests
 
-def search_isbn(isbn: int, verbose=False)->dict:
+def copy_entry(
+        src_dict: dict, src_key: str,
+        dst_dict: dict, dst_key: str
+    ):
+    try:
+        dst_dict[dst_key] = src_dict[src_key]
+    except:
+        dst_dict[dst_key] = None
+        print("There is no key named '{}'".format(src_key))
+
+def search_isbn(isbn: int, verbose=False) -> dict:
     """
     Function to search ISBN value in Google Books.
 
@@ -11,7 +21,7 @@ def search_isbn(isbn: int, verbose=False)->dict:
 
     Returns
     -------
-    title, authors, published_date, thumbnail_link
+    bookdata: dict
         Information about the book.
     """
     url = "https://www.googleapis.com/books/v1/volumes?q=isbn:{}".format(isbn)
@@ -24,19 +34,13 @@ def search_isbn(isbn: int, verbose=False)->dict:
         bookdata = dict(
             isbn            = int(isbn),
             title           = volume_info["title"],
-            authors         = volume_info["authors"],
-            published_date  = volume_info["publishedDate"],
         )
+        copy_entry(volume_info, "authors",       bookdata, "authors")
+        copy_entry(volume_info, "publishedDate", bookdata, "published_date")
+        copy_entry(volume_info, "description",   bookdata, "description")
         try:
-            bookdata["description"] = volume_info["description"]
+            copy_entry(volume_info["imageLinks"], "thumbnail", bookdata, "thumbnail_link")
         except:
-            print("No description found")
-            bookdata["description"] = None
-
-        try:
-            bookdata["thumbnail_link"] = volume_info["imageLinks"]["thumbnail"]
-        except:
-            print("No thumbnail found.")
             bookdata["thumbnail_link"] = None
 
         if verbose:
