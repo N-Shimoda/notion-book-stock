@@ -124,7 +124,7 @@ class App(ctk.CTk):
         bookdata = search_isbn(isbn)
         if bookdata:
             print(bookdata)
-            conf = messagebox.askokcancel("Confirmation", "Upload '{}' to Notion databse?".format(bookdata["title"]))
+            conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:
                 add_book_info(**bookdata)
                 self.history.append(isbn)
@@ -155,7 +155,7 @@ class App(ctk.CTk):
         """Method to set Notion API key as environment variable."""
         api_key = os.environ.get("NOTION_API_KEY")
         if api_key is None:
-            api_key = simpledialog.askstring("Auth", "Enter your Notion API key:", show='*')
+            api_key = simpledialog.askstring("Auth", "Enter Notion API key:", show='*')
             os.environ["NOTION_API_KEY"] = api_key
 
 if __name__ == "__main__":
