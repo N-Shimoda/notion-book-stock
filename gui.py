@@ -1,6 +1,6 @@
 import tkinter as tk
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 import os
 import cv2
 from PIL import Image, ImageTk, ImageOps
@@ -23,7 +23,7 @@ class App(ctk.CTk):
 
         # variables
         self.history = []
-        self.notion_api_key = self.get_notion_api_key()
+        self.get_notion_api_key()
         self.radio_val = tk.IntVar(     # variable for radio button (appearance mode)
             value = ["Light", "Dark"].index(ctk.get_appearance_mode())
         )
@@ -100,27 +100,50 @@ class App(ctk.CTk):
         
         # check for ISBN
         isbn = self.scan_isbn(frame)
-        
+
         # check API call history
         if isbn in self.history:
             add_book = messagebox.askyesno("Book already added", "Are you sure to add this book again?")
         else:
             add_book = (isbn is not None)
-        
-        # add book data to Notion
+
         if add_book:
-            bookdata = search_isbn(isbn)
-            if bookdata:
-                print(bookdata)
-                add_book_info(**bookdata)
-                self.history.append(isbn)
-                messagebox.showinfo(message="Book successfully added to Notion database.")
-            else:
-                messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
-    
+            self.upload_book(isbn)
+
+        # scan next frame
         self.after(self.delay, self.update)
 
-    def scan_isbn(self, frame):
+    def upload_book(self, isbn: int):
+        """
+        Method to upload given book (ISBN) to Notion databse.
+        
+        Parameters
+        ----------
+        isbn: int
+        """
+        bookdata = search_isbn(isbn)
+        if bookdata:
+            print(bookdata)
+            conf = messagebox.askokcancel("Confirmation", "Upload '{}' to Notion databse?".format(bookdata["title"]))
+            if conf:
+                add_book_info(**bookdata)
+                self.history.append(isbn)
+        else:
+            messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
+
+    def scan_isbn(self, frame) -> int | None:
+        """
+        Method to scan ISBN barcode in given frame.
+
+        Parameters
+        ----------
+        frame: numpy.ndarray
+
+        Return
+        ------
+        isbn: int | None
+            ISBN value found in the frame.
+        """
         isbn = None
         for barcode in decode(frame):
             value = barcode.data.decode('utf-8')
@@ -129,13 +152,11 @@ class App(ctk.CTk):
         return isbn
     
     def get_notion_api_key(self):
+        """Method to set Notion API key as environment variable."""
         api_key = os.environ.get("NOTION_API_KEY")
         if api_key is None:
-            dialog = ctk.CTkInputDialog(text="Enter Notion API key:", title="auth")
-            api_key = dialog.get_input()
+            api_key = simpledialog.askstring("Auth", "Enter your Notion API key:", show='*')
             os.environ["NOTION_API_KEY"] = api_key
-
-        return api_key
 
 if __name__ == "__main__":
     app = App()
