@@ -45,12 +45,16 @@ def get_page_ids(database_id):
 
 def add_book_info(
         isbn: int,
-        title: str, authors: list[str],
-        published_date: str, description: str,
-        thumbnail_link: str
+        title: str,
+        authors: list[str] | None,
+        published_date: str | None,
+        description: str | None,
+        thumbnail_link: str | None
         ):
-    """Function to add book information to given database."""
-
+    """
+    Function to add book information to given database.
+    `isbn` and `title` should not be `None`.
+    """
     NOTION_API_KEY = get_api_key("NOTION_API_KEY")
     url = "https://api.notion.com/v1/pages"
 
@@ -70,17 +74,7 @@ def add_book_info(
                 "title": [
                     {"text": {"content": title}}
                 ]
-            },
-            "著者": {
-                "multi_select": [
-                    {"name": n} for n in authors
-                ]
-            },
-            "出版年": {
-                "date": {
-                    "start": published_date
-                }
-            },
+            }
         },
         "children": [
             {
@@ -90,23 +84,54 @@ def add_book_info(
                     "rich_text": [{ "type": "text", "text": { "content": "概要" } }]
                 }
             },
-            {
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [
-                        {
-                            "type": "text",
-                            "text": {
-                                "content": description
-                            }
-                        }
-                    ]
-                }
-            }
         ]
     }
 
+    # authors
+    if authors:
+        payload["properties"]["著者"] = {
+                "multi_select": [
+                    {"name": n} for n in authors
+                ]
+            }
+    
+    # published date
+    if published_date:
+        payload["properties"]["出版年"] = {
+                "date": {
+                    "start": published_date
+                }
+            }
+
+    # description
+    if description:
+        payload["children"].append(
+            {
+                "object": "block",
+                # "type": "paragraph",
+                # "paragraph": {
+                #     "rich_text": [
+                #         {
+                #             "type": "text",
+                #             "text": {
+                #                 "content": description
+                #             }
+                #         }
+                #     ]
+                # }
+                "type": "quote",
+                "quote": {
+                    "text": {
+                        "type": "text",
+                        "text": {
+                            "content": description
+                        }
+                    }
+                }
+            }
+        )
+
+    # thumbnail
     if thumbnail_link:
         payload["cover"] = {
             "type": "external",
@@ -125,7 +150,6 @@ if __name__ == "__main__":
         authors=["Naoki Shimoda", "Akihiro Yamamoto"],
         description='本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。',
         thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg"
-        # thumbnail_link=None
     )
 
     # get_page_ids(DATABASE_ID)
