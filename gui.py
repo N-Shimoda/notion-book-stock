@@ -1,17 +1,22 @@
-import tkinter as tk
-import customtkinter as ctk
-from tkinter import messagebox, simpledialog
+import hashlib
 import os
+from tkinter import messagebox, simpledialog
+
+import customtkinter as ctk
 import cv2
-from PIL import Image, ImageTk, ImageOps
+from dotenv import load_dotenv
+from PIL import Image, ImageOps, ImageTk
 from pyzbar.pyzbar import decode
+
 from src.google_books import search_isbn
 from src.notion import add_book_info
+
 
 def is_valid_ISBN13(num: int) -> bool:
     """Function to validate if a given integer is ISBN-13."""
     num_str = str(num)
-    return (num_str[0:3]=="978" or num_str[0:3]=="979")
+    return num_str[0:3] == "978" or num_str[0:3] == "979"
+
 
 class App(ctk.CTk):
     def __init__(self, **kwargs):
@@ -26,19 +31,23 @@ class App(ctk.CTk):
         self.history = []
         self.cmbbox = None
 
-        # set API key as environmental variable
-        self.get_notion_api_key()
+        try:
+            # authentify the user
+            self.authentification()
 
-        # start video capturing
-        self.vcap = cv2.VideoCapture(0)
-        self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            # start video capturing
+            self.vcap = cv2.VideoCapture(0)
+            self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-        # --- create GUI ---
-        self.create_frames()
-        self.create_widgets()
-        self.delay = 5 # [mili seconds]
-        self.update()
+            # --- create GUI ---
+            self.create_frames()
+            self.create_widgets()
+            self.delay = 5  # [mili seconds]
+            self.update()
+        except BaseException as e:
+            print(e)
+            exit()
 
     def create_frames(self):
         """Method to create frames."""
@@ -53,9 +62,7 @@ class App(ctk.CTk):
         # side frame
         loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
         self.cmbbox = ctk.CTkComboBox(
-            self.side_frame,
-            values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"], 
-            text_color="orange"
+            self.side_frame, values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"], text_color="orange"
         )
         loc_label.pack(pady=10)
         self.cmbbox.pack(padx=20)
@@ -75,19 +82,19 @@ class App(ctk.CTk):
 
         # show current frame
         pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
-        self.photo = ImageTk.PhotoImage(
-            image=pil_image.transpose(Image.FLIP_LEFT_RIGHT)
-        )
-        self.canvas.create_image(canvas_width/2, canvas_height/2, image=self.photo)
-        
+        self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
+        self.canvas.create_image(canvas_width / 2, canvas_height / 2, image=self.photo)
+
         # check for ISBN
         isbn = self.scan_isbn(frame)
 
         # check API call history
         if isbn in self.history:
-            add_book = messagebox.askyesno("Book already added", "This book has been added. Are you sure to upload ISBN {} again?".format(isbn))
+            add_book = messagebox.askyesno(
+                "Book already added", "This book has been added. Are you sure to upload ISBN {} again?".format(isbn)
+            )
         else:
-            add_book = (isbn is not None)
+            add_book = isbn is not None
 
         if add_book:
             self.upload_book(isbn)
@@ -98,7 +105,7 @@ class App(ctk.CTk):
     def upload_book(self, isbn: int):
         """
         Method to upload given book (ISBN) to Notion databse.
-        
+
         Parameters
         ----------
         isbn: int
@@ -130,17 +137,26 @@ class App(ctk.CTk):
         """
         isbn = None
         for barcode in decode(frame):
-            value = barcode.data.decode('utf-8')
+            value = barcode.data.decode("utf-8")
             if is_valid_ISBN13(value):
                 isbn = value
         return isbn
-    
-    def get_notion_api_key(self):
-        """Method to set Notion API key as environment variable."""
-        api_key = os.environ.get("NOTION_API_KEY")
-        if api_key is None:
-            api_key = simpledialog.askstring("Auth", "Enter Notion API key:", show='*')
-            os.environ["NOTION_API_KEY"] = api_key
+
+    def authentification(self):
+        """Method to authentify the user."""
+        assert load_dotenv()
+        BOOK_REGISTER_PW = os.getenv("BOOK_REGISTER_PW")
+        if BOOK_REGISTER_PW is not None:
+            pw = simpledialog.askstring(title="Authentification", prompt="Enter password: ", show="*")
+            if pw is not None:
+                hash_pw = hashlib.sha256(pw.encode())
+                if BOOK_REGISTER_PW != hash_pw.hexdigest():
+                    self.authentification()
+            else:
+                raise BaseException("Canceled.")
+        else:
+            raise BaseException('"BOOK_REGISTER_PW" is not in environment variables.')
+
 
 if __name__ == "__main__":
     app = App()
