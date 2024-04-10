@@ -108,25 +108,16 @@ def add_book_info(
         payload["children"].append(
             {
                 "object": "block",
-                # "type": "paragraph",
-                # "paragraph": {
-                #     "rich_text": [
-                #         {
-                #             "type": "text",
-                #             "text": {
-                #                 "content": description
-                #             }
-                #         }
-                #     ]
-                # }
                 "type": "quote",
                 "quote": {
-                    "text": {
-                        "type": "text",
-                        "text": {
-                            "content": description
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": description
+                            }
                         }
-                    }
+                    ]
                 }
             }
         )
