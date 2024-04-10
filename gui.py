@@ -18,6 +18,11 @@ def is_valid_ISBN13(num: int) -> bool:
     return num_str[0:3] == "978" or num_str[0:3] == "979"
 
 
+class AuthentificationFailedException(BaseException):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 class App(ctk.CTk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -153,9 +158,9 @@ class App(ctk.CTk):
                 if BOOK_REGISTER_PW != hash_pw.hexdigest():
                     self.authentification()
             else:
-                raise BaseException("Canceled.")
+                raise AuthentificationFailedException("Canceled.")
         else:
-            raise BaseException('"BOOK_REGISTER_PW" is not in environment variables.')
+            raise AuthentificationFailedException('"BOOK_REGISTER_PW" is not in environment variables.')
 
 
 if __name__ == "__main__":
