@@ -51,6 +51,7 @@ class App(ctk.CTk):
             self.delay = 5  # [mili seconds]
             self.update()
         except BaseException as e:
+            print(type(e))
             print(e)
             exit()
 
