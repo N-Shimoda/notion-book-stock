@@ -17,66 +17,48 @@ class App(ctk.CTk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # settings
+        # --- settings ---
         self.title("Notion Book Stock")
-        self.geometry("920x550")
+        ctk.set_appearance_mode("dark")
+        self.geometry("1024x640")
 
-        # variables
+        # --- variables ---
         self.history = []
+        self.cmbbox = None
+
+        # set API key as environmental variable
         self.get_notion_api_key()
-        self.radio_val = tk.IntVar(     # variable for radio button (appearance mode)
-            value = ["Light", "Dark"].index(ctk.get_appearance_mode())
-        )
 
         # start video capturing
         self.vcap = cv2.VideoCapture(0)
         self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-        # create GUI
-        # self.create_menubar()
+        # --- create GUI ---
         self.create_frames()
         self.create_widgets()
-        self.delay = 5 #[mili seconds]
+        self.delay = 5 # [mili seconds]
         self.update()
-
-    def create_menubar(self):
-        # ---- Define menus ----
-        self.menubar = tk.Menu(self)
-        self.menu_view = tk.Menu(self.menubar)
-        self.menu_appearance_mode = tk.Menu(self.menubar, tearoff=False)
-
-        # ---- Menu hierarchy ----
-        self.menubar.add_cascade(label="View", menu=self.menu_view)
-        self.config(menu=self.menubar)
-
-        # ---- View menu ----
-        self.menu_view.add_cascade(label="Change theme", menu=self.menu_appearance_mode)
-        self.menu_appearance_mode.add_radiobutton(
-            label="light",
-            command=lambda: ctk.set_appearance_mode("light"),
-            variable=self.radio_val,
-            value=0
-        )
-        self.menu_appearance_mode.add_radiobutton(
-            label="dark",
-            command=lambda: ctk.set_appearance_mode("dark"),
-            variable=self.radio_val,
-            value=1
-        )
 
     def create_frames(self):
         """Method to create frames."""
-        self.side_frame = ctk.CTkFrame(self, fg_color="gray")
-        self.cam_frame = ctk.CTkFrame(self, width=self.vwidth, height=self.vheight, fg_color="cyan")
+        self.side_frame = ctk.CTkFrame(self)
+        self.cam_frame = ctk.CTkFrame(self, width=self.vwidth, height=self.vheight)
 
         self.side_frame.pack(side="left", fill="y")
         self.cam_frame.pack(side="left", expand=True, fill="both")
 
     def create_widgets(self):
-        # side bar
-        button = ctk.CTkButton(self.side_frame, text="Register")
-        button.pack(anchor="center")
+        """Method to create wedgets in frames"""
+        # side frame
+        loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
+        self.cmbbox = ctk.CTkComboBox(
+            self.side_frame,
+            values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"], 
+            text_color="orange"
+        )
+        loc_label.pack(pady=10)
+        self.cmbbox.pack(padx=20)
 
         # right frame
         self.canvas = ctk.CTkCanvas(self.cam_frame)
@@ -122,7 +104,9 @@ class App(ctk.CTk):
         isbn: int
         """
         bookdata = search_isbn(isbn)
+
         if bookdata:
+            bookdata["location"] = self.cmbbox.get()
             print(bookdata)
             conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:

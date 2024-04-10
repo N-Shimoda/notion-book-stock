@@ -48,6 +48,7 @@ def add_book_info(
         title: str,
         authors: list[str] | None,
         published_date: str | None,
+        location: str,
         description: str | None,
         thumbnail_link: str | None
         ):
@@ -103,6 +104,12 @@ def add_book_info(
                 }
             }
 
+    # location
+    if location:
+        payload["properties"]["所蔵場所"] = {
+                "select": {"name": location}
+            }
+
     # description
     if description:
         payload["children"].append(
@@ -139,6 +146,7 @@ if __name__ == "__main__":
         title="卒業論文", 
         published_date="2024-01-31",
         authors=["Naoki Shimoda", "Akihiro Yamamoto"],
+        location="N1",
         description='本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。',
         thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg"
     )
