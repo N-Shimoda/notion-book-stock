@@ -68,7 +68,10 @@ class App(ctk.CTk):
         # side frame
         loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
         self.cmbbox = ctk.CTkComboBox(
-            self.side_frame, values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"], text_color="orange"
+            self.side_frame,
+            values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"],
+            text_color="orange",
+            state="readonly",
         )
         loc_label.pack(pady=10)
         self.cmbbox.pack(padx=20)
