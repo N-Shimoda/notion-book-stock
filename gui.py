@@ -150,7 +150,7 @@ class App(ctk.CTk):
 
     def authentification(self):
         """Method to authentify the user."""
-        assert load_dotenv()
+        assert load_dotenv(), ".env file doesn't exist."
         BOOK_REGISTER_PW = os.getenv("BOOK_REGISTER_PW")
         if BOOK_REGISTER_PW is not None:
             pw = simpledialog.askstring(title="Authentification", prompt="Enter password: ", show="*")
