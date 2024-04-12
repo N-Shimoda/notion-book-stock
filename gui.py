@@ -16,23 +16,6 @@ from src.github import get_latest_tag
 VERSION = "v1.1"
 RELEASED_DATE = "2024-04-12"
 
-def check_new_release() -> bool:
-    """Function to check if the app is up-to-date with the newest release."""
-    try:
-        latest_tag, release_date = get_latest_tag("N-Shimoda", "notion-book-stock")
-        if latest_tag:
-            if (latest_tag, release_date) == (VERSION, RELEASED_DATE):
-                return True
-            else:
-                messagebox.showwarning("Newer version available", "Newer version is available. Please update the application.")
-                return False
-        else:
-            messagebox.showwarning("No release found", "Please check if the remote repository exists.")
-            return False
-    except:
-        messagebox.showerror("Versioning failed", "Failed in version validation. Please check the repository and network connection")
-        return False
-
 
 def is_valid_ISBN13(num: int) -> bool:
     """Function to validate if a given integer is ISBN-13."""
@@ -74,7 +57,13 @@ class App(ctk.CTk):
             # --- create GUI ---
             self.create_frames()
             self.create_widgets()
-            self.delay = 20  # [mili seconds]
+
+            # --- check updates ---
+            self.update()
+            if not self.check_latest_release():
+                raise ValueError(
+                    "Please get the latest version from GitHub (https://github.com/N-Shimoda/notion-book-stock)."
+                )
 
             canvas_thread = threading.Thread(target=self.update_canvas)
             canvas_thread.start()
@@ -139,9 +128,6 @@ class App(ctk.CTk):
             if add_book:
                 self.upload_book(isbn)
 
-        # scan next frame
-        # self.after(self.delay, self.update_canvas)
-
     def upload_book(self, isbn: int):
         """
         Method to upload given book (ISBN) to Notion databse.
@@ -205,8 +191,27 @@ class App(ctk.CTk):
             print("Canceled.")
             exit()
 
+    def check_latest_release(self) -> bool:
+        """Function to check if the app is up-to-date with the newest release."""
+        try:
+            latest_tag, release_date = get_latest_tag("N-Shimoda", "notion-book-stock")
+            if latest_tag:
+                if (latest_tag, release_date) == (VERSION, RELEASED_DATE):
+                    return True
+                else:
+                    messagebox.showinfo(
+                        "Newer version available", 
+                        "Newer version is available. Please update the application.\n{} → {}".format(VERSION, latest_tag)
+                    )
+                    return False
+            else:
+                messagebox.showwarning("No release found", "Please check if the remote repository exists.")
+                return False
+        except:
+            messagebox.showerror("Versioning failed", "Failed in version validation. Please check the repository and network connection")
+            return False
+    
 if __name__ == "__main__":
     
-    if check_new_release():
-        app = App()
-        app.mainloop()
+    app = App()
+    app.mainloop()
