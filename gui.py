@@ -1,4 +1,5 @@
 import os
+import threading
 from tkinter import messagebox, simpledialog
 
 import customtkinter as ctk
@@ -51,8 +52,11 @@ class App(ctk.CTk):
             # --- create GUI ---
             self.create_frames()
             self.create_widgets()
-            self.delay = 5  # [mili seconds]
-            self.update()
+            self.delay = 20  # [mili seconds]
+
+            canvas_thread = threading.Thread(target=self.update_canvas)
+            canvas_thread.start()
+
         except BaseException as e:
             print(type(e))
             print(e)
@@ -76,6 +80,7 @@ class App(ctk.CTk):
             text_color="orange",
             state="readonly",
         )
+        self.cmbbox.set("新着図書")
         loc_label.pack(pady=10)
         self.cmbbox.pack(padx=20)
 
@@ -83,36 +88,37 @@ class App(ctk.CTk):
         self.canvas = ctk.CTkCanvas(self.cam_frame)
         self.canvas.pack(expand=True, fill="both")
 
-    def update(self):
-        # Get a frame from the video source
-        _, frame = self.vcap.read()
+    def update_canvas(self):
+        while True:
+            # Get a frame from the video source
+            _, frame = self.vcap.read()
 
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # show current frame
-        pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
-        self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
-        self.canvas.create_image(canvas_width / 2, canvas_height / 2, image=self.photo)
+            # show current frame
+            pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
+            self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
+            self.canvas.create_image(canvas_width / 2, canvas_height / 2, image=self.photo)
 
-        # check for ISBN
-        isbn = self.scan_isbn(frame)
+            # check for ISBN
+            isbn = self.scan_isbn(frame)
 
-        # check API call history
-        if isbn in self.history:
-            add_book = messagebox.askyesno(
-                "Book already added", "This book has been added. Are you sure to upload ISBN {} again?".format(isbn)
-            )
-        else:
-            add_book = isbn is not None
+            # check API call history
+            if isbn in self.history:
+                add_book = messagebox.askyesno(
+                    "Book already added", "This book has been added. Are you sure to upload ISBN {} again?".format(isbn)
+                )
+            else:
+                add_book = isbn is not None
 
-        if add_book:
-            self.upload_book(isbn)
+            if add_book:
+                self.upload_book(isbn)
 
         # scan next frame
-        self.after(self.delay, self.update)
+        # self.after(self.delay, self.update_canvas)
 
     def upload_book(self, isbn: int):
         """
