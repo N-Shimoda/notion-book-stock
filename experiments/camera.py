@@ -1,24 +1,25 @@
 """https://imagingsolution.net/program/python/tkinter/display_opencv_video_canvas/ より"""
+
 import tkinter as tk
-from tkinter import filedialog
-from PIL import Image, ImageTk, ImageOps  # 画像データ用
 
 import cv2
+from PIL import Image, ImageOps, ImageTk  # 画像データ用
+
 
 class Application(tk.Frame):
-    def __init__(self, master = None):
+    def __init__(self, master=None):
         super().__init__(master)
         self.pack()
 
-        self.master.title("OpenCVの動画表示")       # ウィンドウタイトル
-        self.master.geometry("400x300")     # ウィンドウサイズ(幅x高さ)
-        
+        self.master.title("OpenCVの動画表示")  # ウィンドウタイトル
+        self.master.geometry("400x300")  # ウィンドウサイズ(幅x高さ)
+
         # Canvasの作成
         self.canvas = tk.Canvas(self.master)
         # Canvasにマウスイベント（左ボタンクリック）の追加
-        self.canvas.bind('<Button-1>', self.canvas_click)
+        self.canvas.bind("<Button-1>", self.canvas_click)
         # Canvasを配置
-        self.canvas.pack(expand = True, fill = tk.BOTH)
+        self.canvas.pack(expand=True, fill=tk.BOTH)
 
         # カメラをオープンする
         self.capture = cv2.VideoCapture(0)
@@ -26,7 +27,7 @@ class Application(tk.Frame):
         self.disp_id = None
 
     def canvas_click(self, event):
-        '''Canvasのマウスクリックイベント'''
+        """Canvasのマウスクリックイベント"""
 
         if self.disp_id is None:
             # 動画を表示
@@ -37,11 +38,11 @@ class Application(tk.Frame):
             self.disp_id = None
 
     def disp_image(self):
-        '''画像をCanvasに表示する'''
+        """画像をCanvasに表示する"""
 
         # フレーム画像の取得
         ret, frame = self.capture.read()
-    
+
         # BGR→RGB変換
         cv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         # NumPyのndarrayからPillowのImageへ変換
@@ -60,15 +61,14 @@ class Application(tk.Frame):
         # 画像の描画
         self.canvas.delete("all")
         self.canvas.create_image(
-                canvas_width / 2,       # 画像表示位置(Canvasの中心)
-                canvas_height / 2,                   
-                image=self.photo_image  # 表示画像データ
-                )
+            canvas_width / 2, canvas_height / 2, image=self.photo_image  # 画像表示位置(Canvasの中心)  # 表示画像データ
+        )
 
         # disp_image()を10msec後に実行する
         self.disp_id = self.after(10, self.disp_image)
 
+
 if __name__ == "__main__":
     root = tk.Tk()
-    app = Application(master = root)
+    app = Application(master=root)
     app.mainloop()
