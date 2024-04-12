@@ -1,4 +1,4 @@
-
+"""From https://qiita.com/kotai2003/items/3d31528d56059c848458"""
 import tkinter as tk
 from tkinter import ttk
 import cv2
@@ -101,8 +101,10 @@ class Application(tk.Frame):
         self.master.destroy()
         self.vcap.release()
 
-
-if __name__ == "__main__":
+def main():
     root = tk.Tk()
     app = Application(master=root)#Inherit
     app.mainloop()
+
+if __name__ == "__main__":
+    main()
