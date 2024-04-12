@@ -1,4 +1,3 @@
-import hashlib
 import os
 import threading
 from tkinter import messagebox, simpledialog
@@ -38,8 +37,12 @@ class App(ctk.CTk):
         self.cmbbox = None
 
         try:
-            # authentify the user
-            self.authentification()
+            # create '.env' file if not exists
+            if not load_dotenv():
+                self.create_dotenv()
+                self.set_api()
+
+            assert os.getenv("NOTION_API_KEY") is not None, "Environment variable 'NOTION_API_KEY' doesn't exist."
 
             # start video capturing
             self.vcap = cv2.VideoCapture(0)
@@ -157,20 +160,28 @@ class App(ctk.CTk):
                 isbn = value
         return isbn
 
-    def authentification(self):
-        """Method to authentify the user."""
-        assert load_dotenv(), ".env file doesn't exist."
-        BOOK_REGISTER_PW = os.getenv("BOOK_REGISTER_PW")
-        if BOOK_REGISTER_PW is not None:
-            pw = simpledialog.askstring(title="Authentification", prompt="Enter password: ", show="*")
-            if pw is not None:
-                hash_pw = hashlib.sha256(pw.encode())
-                if BOOK_REGISTER_PW != hash_pw.hexdigest():
-                    self.authentification()
-            else:
-                raise AuthentificationFailedException("Canceled.")
+    def create_dotenv(self):
+        """Method to create .env file initially."""
+        dotenv_path = ".env"
+        assert not os.path.exists(dotenv_path), "'.env' file already exists."
+        with open(dotenv_path, "w", encoding="utf-8") as f:
+            f.write("")
+        print("Created '.env' file successfully.")
+
+    def set_api(self):
+        """
+        Method to set API key via a dialog window.
+        """
+        assert os.getenv("NOTION_API_KEY") is None, "Environment variable 'NOTION_API_KEY' already exists."
+        api_key = simpledialog.askstring(title="API key config", prompt="Enter API key of Notion:", show="*")
+        if api_key is not None:
+            with open(".env", "w", encoding="utf-8") as f:
+                f.write(f"NOTION_API_KEY={api_key}")
+            load_dotenv()
+            print("API key has been successfully set.")
         else:
-            raise AuthentificationFailedException('"BOOK_REGISTER_PW" is not in environment variables.')
+            print("Canceled.")
+            exit()
 
 
 if __name__ == "__main__":
