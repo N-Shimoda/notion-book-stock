@@ -61,6 +61,7 @@ class App(ctk.CTk):
             # --- display camera frame ---
             self.delay = 5  # ms
             self.update_canvas()
+            self.update()
         except BaseException as e:
             print(type(e))
             print(e)
