@@ -13,7 +13,7 @@ from src.google_books import search_isbn
 from src.notion import add_book_info
 
 # modify these values when creating new release
-VERSION = "v1.1"
+VERSION = "v1.2"
 RELEASED_DATE = "2024-04-12"
 
 
