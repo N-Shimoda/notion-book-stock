@@ -23,11 +23,6 @@ def is_valid_ISBN13(num: int) -> bool:
     return num_str[0:3] == "978" or num_str[0:3] == "979"
 
 
-class AuthentificationFailedException(BaseException):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-
 class App(ctk.CTk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
