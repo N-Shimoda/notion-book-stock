@@ -1,5 +1,4 @@
 import os
-import threading
 from tkinter import messagebox, simpledialog
 
 import customtkinter as ctk
@@ -54,15 +53,14 @@ class App(ctk.CTk):
             self.create_widgets()
 
             # --- check updates ---
-            self.update()
             if not self.check_latest_release():
                 raise ValueError(
                     "Please get the latest version from GitHub (https://github.com/N-Shimoda/notion-book-stock)."
                 )
 
-            canvas_thread = threading.Thread(target=self.update_canvas, daemon=True)
-            canvas_thread.start()
-
+            # --- display camera frame ---
+            self.delay = 5  # ms
+            self.update_canvas()
         except BaseException as e:
             print(type(e))
             print(e)
@@ -79,7 +77,7 @@ class App(ctk.CTk):
     def create_widgets(self):
         """Method to create wedgets in frames"""
         # side frame
-        loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
+        self.loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
         self.cmbbox = ctk.CTkComboBox(
             self.side_frame,
             values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"],
@@ -87,7 +85,7 @@ class App(ctk.CTk):
             state="readonly",
         )
         self.cmbbox.set("新着図書")
-        loc_label.pack(pady=10)
+        self.loc_label.pack(pady=10)
         self.cmbbox.pack(padx=20)
 
         # right frame
@@ -95,34 +93,35 @@ class App(ctk.CTk):
         self.canvas.pack(expand=True, fill="both")
 
     def update_canvas(self):
-        while True:
-            # Get a frame from the video source
-            _, frame = self.vcap.read()
+        # Get a frame from the video source
+        _, frame = self.vcap.read()
 
-            canvas_width = self.canvas.winfo_width()
-            canvas_height = self.canvas.winfo_height()
+        self.canvas_width = self.canvas.winfo_width()
+        self.canvas_height = self.canvas.winfo_height()
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            # show current frame
-            pil_image = ImageOps.pad(Image.fromarray(frame), (canvas_width, canvas_height))
-            self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
-            self.canvas.create_image(canvas_width / 2, canvas_height / 2, image=self.photo)
+        # show current frame
+        pil_image = ImageOps.pad(Image.fromarray(frame), (self.canvas_width, self.canvas_height))
+        self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
+        self.canvas.create_image(self.canvas_width / 2, self.canvas_height / 2, image=self.photo)
 
-            # check for ISBN
-            isbn = self.scan_isbn(frame)
+        # check for ISBN
+        isbn = self.scan_isbn(frame)
 
-            # check API call history
-            if isbn in self.history:
-                add_book = messagebox.askyesno(
-                    "Book already added",
-                    "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
-                )
-            else:
-                add_book = isbn is not None
+        # check API call history
+        if isbn in self.history:
+            add_book = messagebox.askyesno(
+                "Book already added",
+                "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
+            )
+        else:
+            add_book = isbn is not None
 
-            if add_book:
-                self.upload_book(isbn)
+        if add_book:
+            self.upload_book(isbn)
+
+        self.after(self.delay, self.update_canvas)
 
     def upload_book(self, isbn: int):
         """
