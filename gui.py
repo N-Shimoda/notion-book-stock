@@ -14,7 +14,7 @@ from src.notion import add_book_info
 
 # modify these values when creating new release
 VERSION = "v1.2"
-RELEASED_DATE = "2024-04-12"
+RELEASED_DATE = "2024-04-13"
 
 
 def is_valid_ISBN13(num: int) -> bool:
