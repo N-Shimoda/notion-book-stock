@@ -43,8 +43,21 @@ class App(ctk.CTk):
 
             assert os.getenv("NOTION_API_KEY") is not None, "Environment variable 'NOTION_API_KEY' doesn't exist."
 
+            # list available camera(s)
+            self.available_cam = []
+            for i in range(5):
+                try:
+                    cap = cv2.VideoCapture(i)
+                    if cap is None or not cap.isOpened():
+                        raise IndexError("Camera index out of range.")
+                    else:
+                        self.available_cam.append(i)
+                except IndexError:
+                    break
+            assert len(self.available_cam) != 0, "No video source detected."
+
             # start video capturing
-            self.vcap = cv2.VideoCapture(0)
+            self.vcap = cv2.VideoCapture(self.available_cam[0])
             self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
             self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
@@ -76,7 +89,7 @@ class App(ctk.CTk):
 
     def create_widgets(self):
         """Method to create wedgets in frames"""
-        # side frame
+        # location pulldown
         self.loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
         self.cmbbox = ctk.CTkComboBox(
             self.side_frame,
@@ -87,6 +100,18 @@ class App(ctk.CTk):
         self.cmbbox.set("新着図書")
         self.loc_label.pack(pady=10)
         self.cmbbox.pack(padx=20)
+
+        # camera pulldown
+        self.cam_label = ctk.CTkLabel(self.side_frame, text="Camera source", font=ctk.CTkFont(size=16))
+        self.cam_cmbbox = ctk.CTkComboBox(
+            self.side_frame,
+            values=list(map("Camera {}".format, self.available_cam)),
+            text_color="orange",
+            state="readonly",
+        )
+        self.cam_cmbbox.set(f"Camera {self.available_cam[0]}")
+        self.cam_cmbbox.pack(padx=10, side="bottom")
+        self.cam_label.pack(padx=10, side="bottom")
 
         # right frame
         self.canvas = ctk.CTkCanvas(self.cam_frame)
