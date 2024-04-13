@@ -109,7 +109,8 @@ class App(ctk.CTk):
             # check API call history
             if isbn in self.history:
                 add_book = messagebox.askyesno(
-                    "Book already added", "This book has been added. Are you sure to upload ISBN {} again?".format(isbn)
+                    "Book already added",
+                    "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
                 )
             else:
                 add_book = isbn is not None
