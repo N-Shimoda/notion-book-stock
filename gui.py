@@ -43,7 +43,7 @@ class App(ctk.CTk):
 
             assert os.getenv("NOTION_API_KEY") is not None, "Environment variable 'NOTION_API_KEY' doesn't exist."
 
-            # list available camera(s)
+            # get available camera(s)
             self.available_cam = []
             for i in range(5):
                 try:
@@ -110,6 +110,7 @@ class App(ctk.CTk):
             state="readonly",
         )
         self.cam_cmbbox.set(f"Camera {self.available_cam[0]}")
+        self.cam_cmbbox.bind("<<ComboboxSelected>>", self.switch_source)
         self.cam_cmbbox.pack(padx=10, side="bottom")
         self.cam_label.pack(padx=10, side="bottom")
 
@@ -147,6 +148,17 @@ class App(ctk.CTk):
             self.upload_book(isbn)
 
         self.after(self.delay, self.update_canvas)
+
+    def switch_source(self):
+        video_src_str = self.cam_cmbbox.get()
+        video_src = 0
+        for c in video_src_str:
+            if c.isdigit():
+                video_src = int(c)
+                break
+        self.vcap = cv2.VideoCapture(video_src)
+        self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
     def upload_book(self, isbn: int):
         """
