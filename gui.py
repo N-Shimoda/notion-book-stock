@@ -60,7 +60,7 @@ class App(ctk.CTk):
                     "Please get the latest version from GitHub (https://github.com/N-Shimoda/notion-book-stock)."
                 )
 
-            canvas_thread = threading.Thread(target=self.update_canvas)
+            canvas_thread = threading.Thread(target=self.update_canvas, daemon=True)
             canvas_thread.start()
 
         except BaseException as e:
