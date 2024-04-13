@@ -23,7 +23,7 @@ def get_api_key(name: str) -> str:
     api_key: str
     """
     api_key = os.environ.get(name)
-    if api_key:
+    if api_key is not None:
         return api_key
     else:
         api_key = input("Enter Notion API key: ")
@@ -55,7 +55,7 @@ def add_book_info(
     location: str,
     description: str | None,
     thumbnail_link: str | None,
-):
+) -> requests.Response:
     """
     Function to add book information to given database.
     `isbn` and `title` should not be `None`.
@@ -109,6 +109,7 @@ def add_book_info(
 
     response = requests.post(url, headers=headers, json=payload)
     print(response)
+    return response
 
 
 if __name__ == "__main__":

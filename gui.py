@@ -61,7 +61,6 @@ class App(ctk.CTk):
             # --- display camera frame ---
             self.delay = 40  # ms
             self.update_canvas()
-
         except BaseException as e:
             print(type(e))
             print(e)
@@ -139,8 +138,15 @@ class App(ctk.CTk):
             print(bookdata)
             conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:
-                add_book_info(**bookdata)
-                self.history.append(isbn)
+                res = add_book_info(**bookdata)
+                if res.status_code == 200:
+                    print("Successfully added.")
+                    self.history.append(isbn)
+                if res.status_code != 200:
+                    print("Request failed. Maybe API key is outdated.")
+                    print(f"Response Status Code: {res.status_code}")
+                if res.status_code == 401:
+                    self.set_api(prompt="Update API key of Notion:")
         else:
             messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
 
@@ -172,16 +178,17 @@ class App(ctk.CTk):
             f.write("")
         print("Created '.env' file successfully.")
 
-    def set_api(self):
+    def set_api(self, title="API key config", prompt="Enter API key of Notion:"):
         """
         Method to set API key via a dialog window.
         """
-        assert os.getenv("NOTION_API_KEY") is None, "Environment variable 'NOTION_API_KEY' already exists."
-        api_key = simpledialog.askstring(title="API key config", prompt="Enter API key of Notion:", show="*")
+        if os.getenv("NOTION_API_KEY") is not None:
+            print("Environment variable 'NOTION_API_KEY' already exists.")
+        api_key = simpledialog.askstring(title, prompt, show="*")
         if api_key is not None:
             with open(".env", "w", encoding="utf-8") as f:
                 f.write(f"NOTION_API_KEY={api_key}")
-            load_dotenv()
+            load_dotenv(override=True)
             print("API key has been successfully set.")
         else:
             print("Canceled.")
@@ -215,6 +222,5 @@ class App(ctk.CTk):
 
 
 if __name__ == "__main__":
-
     app = App()
     app.mainloop()
