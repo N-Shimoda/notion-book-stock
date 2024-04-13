@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from PIL import Image, ImageOps, ImageTk
 from pyzbar.pyzbar import decode
 
+from src.github import get_latest_tag
 from src.google_books import search_isbn
 from src.notion import add_book_info
-from src.github import get_latest_tag
 
 # modify these values when creating new release
 VERSION = "v1.1"
@@ -120,7 +120,8 @@ class App(ctk.CTk):
             # check API call history
             if isbn in self.history:
                 add_book = messagebox.askyesno(
-                    "Book already added", "This book has been added. Are you sure to upload ISBN {} again?".format(isbn)
+                    "Book already added",
+                    "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
                 )
             else:
                 add_book = isbn is not None
@@ -200,18 +201,25 @@ class App(ctk.CTk):
                     return True
                 else:
                     messagebox.showinfo(
-                        "Newer version available", 
-                        "Newer version is available. Please update the application.\n{} → {}".format(VERSION, latest_tag)
+                        "Newer version available",
+                        "Newer version is available. Please update the application.\n{} → {}".format(
+                            VERSION, latest_tag
+                        ),
                     )
                     return False
             else:
                 messagebox.showwarning("No release found", "Please check if the remote repository exists.")
                 return False
-        except:
-            messagebox.showerror("Versioning failed", "Failed in version validation. Please check the repository and network connection")
+        except BaseException as e:
+            print(type(e))
+            print(e)
+            messagebox.showerror(
+                "Versioning failed", "Failed in version validation. Please check the repository and network connection"
+            )
             return False
-    
+
+
 if __name__ == "__main__":
-    
+
     app = App()
     app.mainloop()
