@@ -1,4 +1,6 @@
 """From https://qiita.com/kotai2003/items/3d31528d56059c848458"""
+
+import time
 import tkinter as tk
 from tkinter import font
 
@@ -100,10 +102,12 @@ class Application(tk.Frame):
         self.master.destroy()
         self.vcap.release()
 
+
 def main():
     root = tk.Tk()
-    app = Application(master=root)#Inherit
+    app = Application(master=root)  # Inherit
     app.mainloop()
+
 
 if __name__ == "__main__":
     main()
