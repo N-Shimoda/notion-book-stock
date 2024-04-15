@@ -120,7 +120,7 @@ class App(ctk.CTk):
         self.cam_label.pack(padx=10, side="bottom")
 
         # right frame
-        self.canvas = ctk.CTkCanvas(self.cam_frame)
+        self.canvas = ctk.CTkCanvas(self.cam_frame, highlightthickness=0)
         self.canvas.pack(expand=True, fill="both")
 
     def update_canvas(self):
