@@ -93,33 +93,40 @@ class App(ctk.CTk):
         self.cam_frame.pack(side="left", expand=True, fill="both")
 
     def create_widgets(self):
-        """Method to create wedgets in frames"""
+        """Method to create wedgets in each frame."""
+        # --- side frame ---
+        # small frames
+        self.loc_frame = ctk.CTkFrame(self.side_frame, fg_color="transparent")
+        self.camsrc_frame = ctk.CTkFrame(self.side_frame, fg_color="transparent")
+        self.loc_frame.pack(pady=20)
+        self.camsrc_frame.pack(side="bottom", pady=30)
+
         # location pulldown
-        self.loc_label = ctk.CTkLabel(self.side_frame, text="Location", font=ctk.CTkFont(size=16))
+        self.loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=16))
         self.cmbbox = ctk.CTkComboBox(
-            self.side_frame,
+            self.loc_frame,
             values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"],
             text_color="orange",
             state="readonly",
         )
         self.cmbbox.set("新着図書")
-        self.loc_label.pack(pady=10)
+        self.loc_label.pack(pady=5)
         self.cmbbox.pack(padx=20)
 
         # camera pulldown
-        self.cam_label = ctk.CTkLabel(self.side_frame, text="Camera source", font=ctk.CTkFont(size=16))
+        self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=16))
         self.cam_cmbbox = ctk.CTkComboBox(
-            self.side_frame,
+            self.camsrc_frame,
             values=list(map("Camera {}".format, self.available_cam)),
             text_color="orange",
             state="readonly",
             command=self.switch_source,
         )
         self.cam_cmbbox.set(f"Camera {self.available_cam[0]}")
-        self.cam_cmbbox.pack(padx=10, side="bottom")
-        self.cam_label.pack(padx=10, side="bottom")
+        self.cam_label.pack(pady=5)
+        self.cam_cmbbox.pack(padx=20)
 
-        # right frame
+        # --- right frame ---
         self.canvas = ctk.CTkCanvas(self.cam_frame, highlightthickness=0)
         self.canvas.pack(expand=True, fill="both")
 

@@ -4,7 +4,6 @@ import os
 
 import requests
 
-# DATABASE_ID = "068ea96919534bcf9adba807c9f75833"    # 書籍一覧
 DATABASE_ID = "3dacfb355eb34f0b9d127a988539809a"  # books in lab
 
 
@@ -152,7 +151,7 @@ if __name__ == "__main__":
         authors=["Naoki Shimoda", "Akihiro Yamamoto"],
         location="N1",
         description="本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。",
-        thumbnail_link=None#"https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
+        thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
     )
 
     # get_page_ids(DATABASE_ID)
