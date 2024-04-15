@@ -38,13 +38,15 @@ class App(ctk.CTk):
         self.cmbbox = None
 
         try:
-            # create '.env' file if not exists
+            # --- Notion API key ---
             if not load_dotenv():
+                # create '.env' file if not exists
                 self.create_dotenv()
                 self.set_api()
 
             assert os.getenv("NOTION_API_KEY") is not None, "Environment variable 'NOTION_API_KEY' doesn't exist."
 
+            # --- video capturing ---
             # get available camera(s)
             self.available_cam = []
             for i in range(5):
@@ -70,7 +72,7 @@ class App(ctk.CTk):
             self.create_frames()
             self.create_widgets()
 
-            # --- check updates ---
+            # --- check for newer release ---
             if not self.check_latest_release():
                 raise ValueError(
                     "Please get the latest version from GitHub (https://github.com/N-Shimoda/notion-book-stock)."
