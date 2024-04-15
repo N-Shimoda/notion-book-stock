@@ -99,13 +99,44 @@ def add_book_info(
             {
                 "object": "block",
                 "type": "quote",
-                "quote": {"rich_text": [{"type": "text", "text": {"content": description}}]},
+                "quote": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": description}
+                        }
+                    ]
+                },
+            }
+        )
+    else:
+        payload["children"].append(
+            {
+                "object": "block",
+                "type": "quote",
+                "quote": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": "書籍情報はありません。"},
+                            "annotations": {"color": "gray"}
+                        }
+                    ]
+                },
             }
         )
 
     # thumbnail
     if thumbnail_link:
-        payload["cover"] = {"type": "external", "external": {"url": thumbnail_link}}
+        payload["cover"] = {
+            "type": "external",
+            "external": {"url": thumbnail_link}
+        }
+    else:
+        payload["cover"] = {
+            "type": "external",
+            "external": {"url": "https://free-icons.net/wp-content/uploads/2020/08/life041.png"}
+        }
 
     response = requests.post(url, headers=headers, json=payload)
     print(response)
@@ -121,7 +152,7 @@ if __name__ == "__main__":
         authors=["Naoki Shimoda", "Akihiro Yamamoto"],
         location="N1",
         description="本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。",
-        thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
+        thumbnail_link=None#"https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
     )
 
     # get_page_ids(DATABASE_ID)
