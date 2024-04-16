@@ -5,7 +5,6 @@ import time
 
 import requests
 
-# DATABASE_ID = "068ea96919534bcf9adba807c9f75833"    # 書籍一覧
 DATABASE_ID = "3dacfb355eb34f0b9d127a988539809a"  # books in lab
 
 
@@ -100,13 +99,44 @@ def add_book_info(
             {
                 "object": "block",
                 "type": "quote",
-                "quote": {"rich_text": [{"type": "text", "text": {"content": description}}]},
+                "quote": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": description}
+                        }
+                    ]
+                },
+            }
+        )
+    else:
+        payload["children"].append(
+            {
+                "object": "block",
+                "type": "quote",
+                "quote": {
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": "書籍情報はありません。"},
+                            "annotations": {"color": "gray"}
+                        }
+                    ]
+                },
             }
         )
 
     # thumbnail
     if thumbnail_link:
-        payload["cover"] = {"type": "external", "external": {"url": thumbnail_link}}
+        payload["cover"] = {
+            "type": "external",
+            "external": {"url": thumbnail_link}
+        }
+    else:
+        payload["cover"] = {
+            "type": "external",
+            "external": {"url": "https://free-icons.net/wp-content/uploads/2020/08/life041.png"}
+        }
 
     response = requests.post(url, headers=headers, json=payload)
     print(response)
