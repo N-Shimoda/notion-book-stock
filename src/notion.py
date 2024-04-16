@@ -114,6 +114,14 @@ def add_book_info(
 
 
 def get_isbn_list() -> list[int]:
+    """
+    Method to get the list of ISBN from a database.
+
+    Return
+    ------
+    li_isbn: list[int]
+        List of ISBN in a database.
+    """
     NOTION_API_KEY = get_api_key("NOTION_API_KEY")
 
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
