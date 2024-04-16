@@ -212,21 +212,6 @@ class App(ctk.CTk):
                 isbn = value
         return isbn
 
-    def is_duplicated(self, bookdata: dict) -> bool:
-        """
-        Method to upload given book (ISBN) to Notion databse.
-
-        Parameters
-        ----------
-        bookdata: dict
-
-        Return
-        ----------
-        res: bool
-            Whether the scanned book exists in DB
-        """
-        pass
-
     def create_dotenv(self):
         """Method to create .env file initially."""
         dotenv_path = ".env"
