@@ -11,7 +11,7 @@ from pyzbar.pyzbar import decode
 
 from src.github import get_latest_tag
 from src.google_books import search_isbn
-from src.notion import add_book_info
+from src.notion import add_book_info, get_isbn_list
 
 # modify these values when creating new release
 VERSION = "v1.2"
@@ -34,7 +34,7 @@ class App(ctk.CTk):
         self.geometry("1024x640")
 
         # --- variables ---
-        self.history = []
+        self.history = get_isbn_list()
         self.cmbbox = None
 
         try:
@@ -207,7 +207,7 @@ class App(ctk.CTk):
         """
         isbn = None
         for barcode in decode(frame):
-            value = barcode.data.decode("utf-8")
+            value = int(barcode.data.decode("utf-8"))
             if is_valid_ISBN13(value):
                 isbn = value
         return isbn
