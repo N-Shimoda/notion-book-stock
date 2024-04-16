@@ -207,7 +207,7 @@ class App(ctk.CTk):
         """
         isbn = None
         for barcode in decode(frame):
-            value = barcode.data.decode("utf-8")
+            value = int(barcode.data.decode("utf-8"))
             if is_valid_ISBN13(value):
                 isbn = value
         return isbn
