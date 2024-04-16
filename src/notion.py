@@ -99,14 +99,7 @@ def add_book_info(
             {
                 "object": "block",
                 "type": "quote",
-                "quote": {
-                    "rich_text": [
-                        {
-                            "type": "text",
-                            "text": {"content": description}
-                        }
-                    ]
-                },
+                "quote": {"rich_text": [{"type": "text", "text": {"content": description}}]},
             }
         )
     else:
@@ -119,7 +112,7 @@ def add_book_info(
                         {
                             "type": "text",
                             "text": {"content": "書籍情報はありません。"},
-                            "annotations": {"color": "gray"}
+                            "annotations": {"color": "gray"},
                         }
                     ]
                 },
@@ -128,14 +121,11 @@ def add_book_info(
 
     # thumbnail
     if thumbnail_link:
-        payload["cover"] = {
-            "type": "external",
-            "external": {"url": thumbnail_link}
-        }
+        payload["cover"] = {"type": "external", "external": {"url": thumbnail_link}}
     else:
         payload["cover"] = {
             "type": "external",
-            "external": {"url": "https://free-icons.net/wp-content/uploads/2020/08/life041.png"}
+            "external": {"url": "https://free-icons.net/wp-content/uploads/2020/08/life041.png"},
         }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -184,6 +174,29 @@ def get_isbn_list() -> list[int] | None:
         print(type(e))
         print(e)
         return None
+
+
+def update_db(
+    isbn: int,
+    title: str,
+    authors: list[str] | None,
+    published_date: str | None,
+    location: str,
+    description: str | None,
+    thumbnail_link: str | None,
+) -> requests.Response:
+    NOTION_API_KEY = get_api_key("NOTION_API_KEY")
+
+    url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+    headers = {
+        "Notion-Version": "2022-06-28",
+        "Authorization": "Bearer " + NOTION_API_KEY,
+        "Content-Type": "application/json",
+    }
+    filter_json = {"filter": {"property": "ISBN-13", "number": {"equals": isbn}}}
+    page = requests.post(url, data=filter_json, headers=headers)
+    page
+    pass
 
 
 if __name__ == "__main__":
