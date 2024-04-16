@@ -10,7 +10,7 @@ def copy_entry(
         dst_dict[dst_key] = None
         print("There is no key named '{}'".format(src_key))
 
-def search_isbn(isbn: int, verbose=False) -> dict:
+def search_isbn(isbn: int, verbose=False) -> dict | None:
     """
     Function to search ISBN value in Google Books.
 
@@ -21,7 +21,7 @@ def search_isbn(isbn: int, verbose=False) -> dict:
 
     Returns
     -------
-    bookdata: dict
+    bookdata: dict | None
         Information about the book.
     """
     url = "https://www.googleapis.com/books/v1/volumes?q=isbn:{}".format(isbn)
@@ -49,7 +49,7 @@ def search_isbn(isbn: int, verbose=False) -> dict:
     else:
         bookdata = None
         if verbose:
-            raise ValueError("No book was found for ISBN '{}'".format(isbn))
+            print("No book was found for ISBN '{}'".format(isbn))
     
     return bookdata
 

@@ -18,11 +18,18 @@ VERSION = "v1.3"
 RELEASED_DATE = "2024-04-16"
 
 
-def is_valid_ISBN13(num: int) -> bool:
-    """Function to validate if a given integer is ISBN-13."""
-    num_str = str(num)
-    return num_str[0:3] == "978" or num_str[0:3] == "979"
-
+def is_valid_ISBN(value: str) -> bool:
+    """Function to validate if a given str is ISBN."""
+    try:
+        int(value)
+        if len(value) == 13:
+            return value[0:3] == "978" or value[0:3] == "979"
+        elif len(value) == 10:
+            return True
+        else:
+            return False
+    except:
+        return False
 
 class App(ctk.CTk):
     def __init__(self, **kwargs):
@@ -144,10 +151,10 @@ class App(ctk.CTk):
         self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
         self.canvas.create_image(self.canvas_width / 2, self.canvas_height / 2, image=self.photo)
 
-        # check for ISBN
+        # scan frame for ISBN
         isbn = self.scan_isbn(frame)
 
-        # check API call history
+        # check existing books
         if isbn in self.history:
             add_book = messagebox.askyesno(
                 "Book already added",
@@ -214,9 +221,10 @@ class App(ctk.CTk):
         """
         isbn = None
         for barcode in decode(frame):
-            value = int(barcode.data.decode("utf-8"))
-            if is_valid_ISBN13(value):
-                isbn = value
+            value = barcode.data.decode("utf-8")
+            if is_valid_ISBN(value):
+                isbn = int(value)
+                break
         return isbn
 
     def create_dotenv(self):
