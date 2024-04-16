@@ -113,7 +113,7 @@ def add_book_info(
     return response
 
 
-def get_isbn_list() -> list[int]:
+def get_isbn_list() -> list[int] | None:
     """
     Method to get the list of ISBN from a database.
 
@@ -149,9 +149,11 @@ def get_isbn_list() -> list[int]:
         return li_isbn
     except KeyError as e:
         print(f"Key {e} doesn't exists.")
+        return None
     except BaseException as e:
         print(type(e))
         print(e)
+        return None
 
 
 if __name__ == "__main__":
