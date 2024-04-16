@@ -1,6 +1,7 @@
 # Use Notion API to create object in database.
 import json
 import os
+import time
 
 import requests
 
@@ -110,6 +111,39 @@ def add_book_info(
     response = requests.post(url, headers=headers, json=payload)
     print(response)
     return response
+
+
+def get_isbn_list() -> list[int]:
+    NOTION_API_KEY = get_api_key("NOTION_API_KEY")
+
+    url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+    headers = {
+        "Notion-Version": "2022-06-28",
+        "Authorization": "Bearer " + NOTION_API_KEY,
+        "Content-Type": "application/json",
+    }
+    payload = {"page_size": 100}
+    has_more = True
+    li_isbn = []
+    try:
+        while has_more:
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            if response.status_code != 200:
+                time.sleep(0.5)
+                continue
+            res_json = response.json()
+            li_isbn += [
+                res_json["results"][i]["properties"]["ISBN-13"]["number"] for i in range(len(res_json["results"]))
+            ]
+            has_more = res_json["has_more"]
+            next_cursor = res_json["next_cursor"]
+            payload = {"page_size": 100, "start_cursor": next_cursor}
+        return li_isbn
+    except KeyError as e:
+        print(f"Key {e} doesn't exists.")
+    except BaseException as e:
+        print(type(e))
+        print(e)
 
 
 if __name__ == "__main__":
