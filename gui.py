@@ -44,7 +44,7 @@ class App(ctk.CTk):
         # --- variables ---
         self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
         self.history = self.db.get_isbn_list()
-        self.loc_choice = ["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"]
+        self.loc_choice = self.db.get_location_tags()
 
         try:
             # create '.env' file if not exists

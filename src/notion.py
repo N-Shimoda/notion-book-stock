@@ -76,17 +76,27 @@ class NotionDB:
             print(e)
             return None
 
-    def get_location_tags(self):
-        pass
+    def get_location_tags(self) -> list[str]:
+        """
+        Method to get existing options for location select.
 
-    def get_page_ids(self):
-        """Method to get information of current pages in database, and save them as json file."""
-        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        Returns
+        -------
+        locations: list[str]
+            Options for location select.
+        """
+        url = f"https://api.notion.com/v1/databases/{self.database_id}"
 
-        response = requests.post(url, headers=self.headers)
-        data = response.json()
-        with open("src/current_books.json", "w") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+        response_data = requests.get(url, headers=self.headers).json()
+        options_data = response_data["properties"]["所蔵場所"]["select"]["options"]
+
+        locations = []
+        for item in options_data:
+            loc = item["name"]
+            if not item in locations:
+                locations.append(loc)
+
+        return locations
 
     def add_book_info(
         self,
@@ -182,4 +192,5 @@ if __name__ == "__main__":
         thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
     )
 
-    db.get_page_ids()
+    locations = db.get_location_tags()
+    print(locations)
