@@ -31,6 +31,7 @@ def is_valid_ISBN(value: str) -> bool:
     except:
         return False
 
+
 class App(ctk.CTk):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -118,12 +119,8 @@ class App(ctk.CTk):
             state="readonly",
         )
         self.cmbbox.set("新着図書")
-        loc_button = ctk.CTkButton(
-            self.loc_frame, text="Add location",
-            command=self.add_location_Cb,
-            width=100
-        )
-        
+        loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
+
         loc_label.pack(pady=5)
         self.cmbbox.pack(padx=20)
         loc_button.pack(padx=20, pady=10, anchor="e")
@@ -287,11 +284,17 @@ class App(ctk.CTk):
 
     def add_location_Cb(self):
         """Method to add new shelf to option of locations."""
-        dialog = ctk.CTkInputDialog(title="Enter location name", text="Enter the name of shelf.")
-        self.loc_choice.append(dialog.get_input().split()[0])
+        # wait for input
+        dialog = ctk.CTkInputDialog(title="Enter location name", text="Enter the name of new location.")
+        item = dialog.get_input().split()[0]
+
+        # update combobox
+        self.loc_choice.append(item)
         self.cmbbox.configure(values=self.loc_choice)
+        self.cmbbox.set(item)
 
         print("Current locations: {}".format(self.loc_choice))
+
 
 if __name__ == "__main__":
     app = App()
