@@ -45,7 +45,7 @@ class NotionDB():
         }
         response = requests.post(url, headers=headers)
         data = response.json()
-        with open("barcode/current_books.json", "w") as f:
+        with open("src/current_books.json", "w") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
     def add_book_info(
@@ -197,3 +197,5 @@ if __name__ == "__main__":
         description="本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。",
         thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
     )
+
+    # db.get_page_ids()

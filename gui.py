@@ -11,7 +11,7 @@ from pyzbar.pyzbar import decode
 
 from src.github import get_latest_tag
 from src.google_books import search_isbn
-from src.notion import add_book_info, get_isbn_list
+from src.notion import NotionDB
 
 # modify these values when creating new release
 VERSION = "v1.3"
@@ -41,7 +41,8 @@ class App(ctk.CTk):
         self.geometry("1024x640")
 
         # --- variables ---
-        self.history = get_isbn_list()
+        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
+        self.history = self.db.get_isbn_list()
         self.cmbbox = None
 
         try:
@@ -194,7 +195,7 @@ class App(ctk.CTk):
             print(bookdata)
             conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:
-                res = add_book_info(**bookdata)
+                res = self.db.add_book_info(**bookdata)
                 if res.status_code == 200:
                     print("Successfully added.")
                     self.history.append(isbn)
