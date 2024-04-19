@@ -43,7 +43,7 @@ class App(ctk.CTk):
         # --- variables ---
         self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
         self.history = self.db.get_isbn_list()
-        self.cmbbox = None
+        self.loc_choice = ["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"]
 
         try:
             # create '.env' file if not exists
@@ -110,16 +110,23 @@ class App(ctk.CTk):
         self.camsrc_frame.pack(side="bottom", pady=30)
 
         # location pulldown
-        self.loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=16))
+        loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=16))
         self.cmbbox = ctk.CTkComboBox(
             self.loc_frame,
-            values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"],
+            values=self.loc_choice,
             text_color="orange",
             state="readonly",
         )
         self.cmbbox.set("新着図書")
-        self.loc_label.pack(pady=5)
+        loc_button = ctk.CTkButton(
+            self.loc_frame, text="Add location",
+            command=self.add_location_Cb,
+            width=100
+        )
+        
+        loc_label.pack(pady=5)
         self.cmbbox.pack(padx=20)
+        loc_button.pack(padx=20, pady=10, anchor="e")
 
         # camera pulldown
         self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=16))
@@ -278,6 +285,13 @@ class App(ctk.CTk):
             )
             return False
 
+    def add_location_Cb(self):
+        """Method to add new shelf to option of locations."""
+        dialog = ctk.CTkInputDialog(title="Enter location name", text="Enter the name of shelf.")
+        self.loc_choice.append(dialog.get_input().split()[0])
+        self.cmbbox.configure(values=self.loc_choice)
+
+        print("Current locations: {}".format(self.loc_choice))
 
 if __name__ == "__main__":
     app = App()
