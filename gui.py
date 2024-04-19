@@ -111,11 +111,12 @@ class App(ctk.CTk):
         self.camsrc_frame.pack(side="bottom", pady=30)
 
         # location pulldown
-        loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=16))
+        loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=20))
         self.cmbbox = ctk.CTkComboBox(
             self.loc_frame,
             values=self.loc_choice,
             text_color="orange",
+            font=ctk.CTkFont(size=16),
             state="readonly",
         )
         self.cmbbox.set("新着図書")
@@ -126,11 +127,12 @@ class App(ctk.CTk):
         loc_button.pack(padx=20, pady=10, anchor="e")
 
         # camera pulldown
-        self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=16))
+        self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=20))
         self.cam_cmbbox = ctk.CTkComboBox(
             self.camsrc_frame,
             values=list(map("Camera {}".format, self.available_cam)),
             text_color="orange",
+            font=ctk.CTkFont(size=16),
             state="readonly",
             command=self.switch_source,
         )
@@ -199,7 +201,7 @@ class App(ctk.CTk):
             print(bookdata)
             conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:
-                res = self.db.add_book_info(**bookdata)
+                res = self.db.create_book_page(**bookdata)
                 if res.status_code == 200:
                     print("Successfully added.")
                     self.history.append(isbn)

@@ -3,6 +3,7 @@ import json
 import os
 import time
 from getpass import getpass
+from datetime import datetime
 
 import requests
 
@@ -41,64 +42,7 @@ class NotionDB:
             os.environ[name] = api_key
             return api_key
 
-    def get_isbn_list(self) -> list[int] | None:
-        """
-        Method to get the list of ISBN from a database.
-
-        Return
-        ------
-        li_isbn: list[int]
-            List of ISBN in a database.
-        """
-        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
-        payload = {"page_size": 100}
-        has_more = True
-        li_isbn = []
-        try:
-            while has_more:
-                response = requests.post(url, headers=self.headers, data=json.dumps(payload))
-                if response.status_code != 200:
-                    time.sleep(0.5)
-                    continue
-                res_json = response.json()
-                li_isbn += [
-                    res_json["results"][i]["properties"]["ISBN-13"]["number"] for i in range(len(res_json["results"]))
-                ]
-                has_more = res_json["has_more"]
-                next_cursor = res_json["next_cursor"]
-                payload = {"page_size": 100, "start_cursor": next_cursor}
-            return li_isbn
-        except KeyError as e:
-            print(f"Key {e} doesn't exists.")
-            return None
-        except BaseException as e:
-            print(type(e))
-            print(e)
-            return None
-
-    def get_location_tags(self) -> list[str]:
-        """
-        Method to get existing options for location select.
-
-        Returns
-        -------
-        locations: list[str]
-            Options for location select.
-        """
-        url = f"https://api.notion.com/v1/databases/{self.database_id}"
-
-        response_data = requests.get(url, headers=self.headers).json()
-        options_data = response_data["properties"]["所蔵場所"]["select"]["options"]
-
-        locations = []
-        for item in options_data:
-            loc = item["name"]
-            if not item in locations:
-                locations.append(loc)
-
-        return locations
-
-    def add_book_info(
+    def create_book_page(
         self,
         isbn: int,
         title: str,
@@ -177,20 +121,97 @@ class NotionDB:
         print(response)
         return response
 
+    def get_isbn_list(self) -> list[int] | None:
+        """
+        Method to get the list of ISBN from a database.
+
+        Return
+        ------
+        li_isbn: list[int]
+            List of ISBN in a database.
+        """
+        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        payload = {"page_size": 100}
+        has_more = True
+        li_isbn = []
+        try:
+            while has_more:
+                response = requests.post(url, headers=self.headers, data=json.dumps(payload))
+                if response.status_code != 200:
+                    time.sleep(0.5)
+                    continue
+                res_json = response.json()
+                li_isbn += [
+                    res_json["results"][i]["properties"]["ISBN-13"]["number"] for i in range(len(res_json["results"]))
+                ]
+                has_more = res_json["has_more"]
+                next_cursor = res_json["next_cursor"]
+                payload = {"page_size": 100, "start_cursor": next_cursor}
+            return li_isbn
+        except KeyError as e:
+            print(f"Key {e} doesn't exists.")
+            return None
+        except BaseException as e:
+            print(type(e))
+            print(e)
+            return None
+
+    def get_location_tags(self) -> list[str]:
+        """
+        Method to get existing options for location select.
+
+        Returns
+        -------
+        locations: list[str]
+            Options for location select.
+        """
+        url = f"https://api.notion.com/v1/databases/{self.database_id}"
+
+        response_data = requests.get(url, headers=self.headers).json()
+        options_data = response_data["properties"]["所蔵場所"]["select"]["options"]
+
+        locations = []
+        for item in options_data:
+            loc = item["name"]
+            if not item in locations:
+                locations.append(loc)
+
+        return locations
+
+    def save_bookdata(self, filename="bookdata.json"):
+        """Method to save information about existing books into json."""
+        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        response = requests.post(url, headers=self.headers)
+        result = {
+            "databse_id": self.database_id, 
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "books": []
+        }
+
+        for obj in response.json()["results"]:
+            isbn = obj["properties"]["ISBN-13"]["number"]
+            loc = obj["properties"]["所蔵場所"]["select"]["name"]
+            title = obj["properties"]["名前"]["title"][0]["text"]["content"]
+            result["books"].append(dict(isbn=isbn, title=title, location=loc))
+
+        with open(filename, "w") as f:
+            json.dump(result, f, indent=4, ensure_ascii=False)
+
 
 if __name__ == "__main__":
 
     db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")  # books in lab
+    db.save_bookdata()
 
-    db.add_book_info(
-        isbn=978_0000_0000_00,
-        title="卒業論文",
-        published_date="2024-01-31",
-        authors=["Naoki Shimoda", "Akihiro Yamamoto"],
-        location="N1",
-        description="本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。",
-        thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
-    )
+    # db.create_book_page(
+    #     isbn=978_0000_0000_00,
+    #     title="卒業論文",
+    #     published_date="2024-01-31",
+    #     authors=["Naoki Shimoda", "Akihiro Yamamoto"],
+    #     location="N1",
+    #     description="本研究では、説明可能な過程で多肢選択問題に対して解答する手法の開発を行う。",
+    #     thumbnail_link="https://thumb.ac-illust.com/7a/7aa8e40fe838b70253a97eacbcb32764_t.jpeg",
+    # )
 
-    locations = db.get_location_tags()
-    print(locations)
+    # locations = db.get_location_tags()
+    # print(locations)
