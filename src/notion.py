@@ -8,11 +8,8 @@ from datetime import datetime
 import requests
 
 
-class NotionDB:
-    """Class for handling Notion database."""
-
-    def __init__(self, databse_id: str) -> None:
-        self.database_id = databse_id
+class NotionObject:
+    def __init__(self) -> None:
         self.notion_api_key = self.set_api_key("NOTION_API_KEY")
         self.headers = {
             "Notion-Version": "2022-06-28",
@@ -41,6 +38,14 @@ class NotionDB:
             api_key = getpass("Enter Notion API key: ")
             os.environ[name] = api_key
             return api_key
+
+
+class NotionDB(NotionObject):
+    """Class for handling Notion database."""
+
+    def __init__(self, databse_id: str) -> None:
+        super().__init__()
+        self.database_id = databse_id
 
     def create_book_page(
         self,
@@ -181,7 +186,13 @@ class NotionDB:
     def get_curr_location(self, isbn: int) -> list[str]:
         """Method to get current location tag for the book with given isbn."""
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
-        res = requests.post(url, headers=self.headers)
+        filter = {
+            "property": "ISBN-13",
+            "number": {
+                "equals": isbn
+            } 
+        }
+        res = requests.post(url, headers=self.headers, json=dict(filter=filter))
         with open("sample.json", "w") as f:
             json.dump(res.json(), f, indent=4, ensure_ascii=False)
         pass
@@ -229,11 +240,38 @@ class NotionDB:
             json.dump(result, f, indent=4, ensure_ascii=False)
 
 
+class NotionPage(NotionObject):
+    """Class for handling Notion Page object."""
+    def __init__(self, page_id: str) -> None:
+        super().__init__()
+        self.page_id = page_id
+
+    def update_location(self, loc: str):
+        """
+        Method to update location of the book.
+        
+        Parameters
+        ----------
+        loc: str
+            Name of new location tag.
+        """
+        url = f"https://api.notion.com/v1/pages/{self.page_id}"
+        properties = {
+            "所蔵場所": {"select": {"name": loc}}
+        }
+        res = requests.patch(url, headers=self.headers, json=dict(properties=properties))
+        if res.status_code != 200:
+            raise ValueError("Failed in API call.")
+
+
 if __name__ == "__main__":
 
-    db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")  # books in lab
+    pg = NotionPage(page_id="756baa14-53fa-441f-b35d-a088a67658df")
+    pg.update_location()
+
+    # db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")  # books in lab
     # db.get_curr_location(isbn=9784537214192)
-    db.save_bookdata()
+    # db.save_bookdata()
 
     # db.create_book_page(
     #     isbn=978_0000_0000_00,
