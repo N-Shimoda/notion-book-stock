@@ -11,17 +11,25 @@ from pyzbar.pyzbar import decode
 
 from src.github import get_latest_tag
 from src.google_books import search_isbn
-from src.notion import add_book_info, get_isbn_list
+from src.notion import NotionDB, NotionPage
 
 # modify these values when creating new release
 VERSION = "v1.3"
 RELEASED_DATE = "2024-04-16"
 
 
-def is_valid_ISBN13(num: int) -> bool:
-    """Function to validate if a given integer is ISBN-13."""
-    num_str = str(num)
-    return num_str[0:3] == "978" or num_str[0:3] == "979"
+def is_valid_ISBN(value: str) -> bool:
+    """Function to validate if a given str is ISBN."""
+    try:
+        int(value)
+        if len(value) == 13:
+            return value[0:3] == "978" or value[0:3] == "979"
+        elif len(value) == 10:
+            return True
+        else:
+            return False
+    except:
+        return False
 
 
 class App(ctk.CTk):
@@ -34,8 +42,10 @@ class App(ctk.CTk):
         self.geometry("1024x640")
 
         # --- variables ---
-        self.history = get_isbn_list()
-        self.cmbbox = None
+        print("Initializing database...")
+        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
+        self.history = self.db.get_isbn_list()
+        self.loc_choice = self.db.get_location_tags()
 
         try:
             # create '.env' file if not exists
@@ -102,23 +112,29 @@ class App(ctk.CTk):
         self.camsrc_frame.pack(side="bottom", pady=30)
 
         # location pulldown
-        self.loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=16))
-        self.cmbbox = ctk.CTkComboBox(
+        loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=20))
+        self.loc_cmbbox = ctk.CTkComboBox(
             self.loc_frame,
-            values=["新着図書", "N1", "N2", "N3", "N4", "N5", "N6", "W"],
+            values=self.loc_choice,
             text_color="orange",
+            font=ctk.CTkFont(size=16),
             state="readonly",
         )
-        self.cmbbox.set("新着図書")
-        self.loc_label.pack(pady=5)
-        self.cmbbox.pack(padx=20)
+        if self.loc_choice:
+            self.loc_cmbbox.set(self.loc_choice[0])
+        self.loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
+
+        loc_label.pack(pady=5)
+        self.loc_cmbbox.pack(padx=20)
+        self.loc_button.pack(padx=20, pady=10, anchor="e")
 
         # camera pulldown
-        self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=16))
+        self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=20))
         self.cam_cmbbox = ctk.CTkComboBox(
             self.camsrc_frame,
             values=list(map("Camera {}".format, self.available_cam)),
             text_color="orange",
+            font=ctk.CTkFont(size=16),
             state="readonly",
             command=self.switch_source,
         )
@@ -132,32 +148,48 @@ class App(ctk.CTk):
 
     def update_canvas(self):
         # Get a frame from the video source
-        _, frame = self.vcap.read()
+        ret, frame = self.vcap.read()
 
-        self.canvas_width = self.canvas.winfo_width()
-        self.canvas_height = self.canvas.winfo_height()
+        if ret:
+            self.canvas_width = self.canvas.winfo_width()
+            self.canvas_height = self.canvas.winfo_height()
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # show current frame
-        pil_image = ImageOps.pad(Image.fromarray(frame), (self.canvas_width, self.canvas_height))
-        self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
-        self.canvas.create_image(self.canvas_width / 2, self.canvas_height / 2, image=self.photo)
+            # show current frame
+            pil_image = ImageOps.pad(Image.fromarray(frame), (self.canvas_width, self.canvas_height))
+            self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
+            self.canvas.create_image(self.canvas_width / 2, self.canvas_height / 2, image=self.photo)
 
-        # check for ISBN
-        isbn = self.scan_isbn(frame)
+            # scan frame for ISBN
+            isbn = self.scan_isbn(frame)
 
-        # check API call history
-        if isbn in self.history:
-            add_book = messagebox.askyesno(
-                "Book already added",
-                "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
-            )
-        else:
-            add_book = isbn is not None
+            # check existing books
+            if isbn in self.history:
+                ids = self.db.get_existing_pageid(isbn)
+                tags = []
+                for page_id in ids:
+                    pg = NotionPage(page_id)
+                    tags.append(pg.get_location_tag())
+                yesno = messagebox.askyesno(
+                    "Book already added",
+                    "This book already exists in databse. "\
+                    "Do you want to update location tag?\n{}→{}".format(tags[0], self.loc_cmbbox.get()),
+                )
+                mode = "update" if yesno else "skip"
+            else:
+                mode = "add" if isbn is not None else "skip"
 
-        if add_book:
-            self.upload_book(isbn)
+            match mode:
+                case "add":
+                    self.upload_book(isbn)
+                case "update":
+                    pg = NotionPage(page_id=ids[0])
+                    pg.update_location(loc=self.loc_cmbbox.get())
+                case "skip":
+                    pass
+                case _:
+                    raise ValueError("Variable 'mode' has to be 'add', 'update' or 'skip'.")
 
         self.after(self.delay, self.update_canvas)
 
@@ -183,11 +215,11 @@ class App(ctk.CTk):
         bookdata = search_isbn(isbn)
 
         if bookdata:
-            bookdata["location"] = self.cmbbox.get()
+            bookdata["location"] = self.loc_cmbbox.get()
             print(bookdata)
             conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:
-                res = add_book_info(**bookdata)
+                res = self.db.create_book_page(**bookdata)
                 if res.status_code == 200:
                     print("Successfully added.")
                     self.history.append(isbn)
@@ -214,9 +246,10 @@ class App(ctk.CTk):
         """
         isbn = None
         for barcode in decode(frame):
-            value = int(barcode.data.decode("utf-8"))
-            if is_valid_ISBN13(value):
-                isbn = value
+            value = barcode.data.decode("utf-8")
+            if is_valid_ISBN(value):
+                isbn = int(value)
+                break
         return isbn
 
     def create_dotenv(self):
@@ -268,6 +301,29 @@ class App(ctk.CTk):
                 "Versioning failed", "Failed in version validation. Please check the repository and network connection"
             )
             return False
+
+    def add_location_Cb(self):
+        """Method to add new shelf to option of locations."""
+        # wait for input
+        dialog = ctk.CTkInputDialog(title="Enter location name", text="Enter the name of new location.")
+        self.loc_cmbbox.configure(state="disabled")
+        self.loc_button.configure(state="disabled")
+        self.cam_cmbbox.configure(state="disabled")
+        input = dialog.get_input()
+
+        self.loc_cmbbox.configure(state="normal")
+        self.loc_button.configure(state="normal")
+        self.cam_cmbbox.configure(state="normal")
+
+        # update combobox
+        if input:
+            item = input.split()[0]
+            if not item in self.loc_choice:
+                self.loc_choice.append(item)
+            self.loc_cmbbox.configure(values=self.loc_choice)
+            self.loc_cmbbox.set(item)
+
+        print("Current locations: {}".format(self.loc_choice))
 
 
 if __name__ == "__main__":
