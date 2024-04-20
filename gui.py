@@ -11,7 +11,7 @@ from pyzbar.pyzbar import decode
 
 from src.github import get_latest_tag
 from src.google_books import search_isbn
-from src.notion import NotionDB
+from src.notion import NotionDB, NotionPage
 
 # modify these values when creating new release
 VERSION = "v1.3"
@@ -42,6 +42,7 @@ class App(ctk.CTk):
         self.geometry("1024x640")
 
         # --- variables ---
+        print("Initializing database...")
         self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
         self.history = self.db.get_isbn_list()
         self.loc_choice = self.db.get_location_tags()
@@ -112,19 +113,20 @@ class App(ctk.CTk):
 
         # location pulldown
         loc_label = ctk.CTkLabel(self.loc_frame, text="Location", font=ctk.CTkFont(size=20))
-        self.cmbbox = ctk.CTkComboBox(
+        self.loc_cmbbox = ctk.CTkComboBox(
             self.loc_frame,
             values=self.loc_choice,
             text_color="orange",
             font=ctk.CTkFont(size=16),
             state="readonly",
         )
-        self.cmbbox.set("新着図書")
-        loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
+        if self.loc_choice:
+            self.loc_cmbbox.set(self.loc_choice[0])
+        self.loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
 
         loc_label.pack(pady=5)
-        self.cmbbox.pack(padx=20)
-        loc_button.pack(padx=20, pady=10, anchor="e")
+        self.loc_cmbbox.pack(padx=20)
+        self.loc_button.pack(padx=20, pady=10, anchor="e")
 
         # camera pulldown
         self.cam_label = ctk.CTkLabel(self.camsrc_frame, text="Camera source", font=ctk.CTkFont(size=20))
@@ -146,32 +148,48 @@ class App(ctk.CTk):
 
     def update_canvas(self):
         # Get a frame from the video source
-        _, frame = self.vcap.read()
+        ret, frame = self.vcap.read()
 
-        self.canvas_width = self.canvas.winfo_width()
-        self.canvas_height = self.canvas.winfo_height()
+        if ret:
+            self.canvas_width = self.canvas.winfo_width()
+            self.canvas_height = self.canvas.winfo_height()
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # show current frame
-        pil_image = ImageOps.pad(Image.fromarray(frame), (self.canvas_width, self.canvas_height))
-        self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
-        self.canvas.create_image(self.canvas_width / 2, self.canvas_height / 2, image=self.photo)
+            # show current frame
+            pil_image = ImageOps.pad(Image.fromarray(frame), (self.canvas_width, self.canvas_height))
+            self.photo = ImageTk.PhotoImage(image=pil_image.transpose(Image.FLIP_LEFT_RIGHT))
+            self.canvas.create_image(self.canvas_width / 2, self.canvas_height / 2, image=self.photo)
 
-        # scan frame for ISBN
-        isbn = self.scan_isbn(frame)
+            # scan frame for ISBN
+            isbn = self.scan_isbn(frame)
 
-        # check existing books
-        if isbn in self.history:
-            add_book = messagebox.askyesno(
-                "Book already added",
-                "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
-            )
-        else:
-            add_book = isbn is not None
+            # check existing books
+            if isbn in self.history:
+                ids = self.db.get_existing_pageid(isbn)
+                tags = []
+                for page_id in ids:
+                    pg = NotionPage(page_id)
+                    tags.append(pg.get_location_tag())
+                yesno = messagebox.askyesno(
+                    "Book already added",
+                    "This book already exists in databse. "\
+                    "Do you want to update location tag?\n{}→{}".format(tags[0], self.loc_cmbbox.get()),
+                )
+                mode = "update" if yesno else "skip"
+            else:
+                mode = "add" if isbn is not None else "skip"
 
-        if add_book:
-            self.upload_book(isbn)
+            match mode:
+                case "add":
+                    self.upload_book(isbn)
+                case "update":
+                    pg = NotionPage(page_id=ids[0])
+                    pg.update_location(loc=self.loc_cmbbox.get())
+                case "skip":
+                    pass
+                case _:
+                    raise ValueError("Variable 'mode' has to be 'add', 'update' or 'skip'.")
 
         self.after(self.delay, self.update_canvas)
 
@@ -197,7 +215,7 @@ class App(ctk.CTk):
         bookdata = search_isbn(isbn)
 
         if bookdata:
-            bookdata["location"] = self.cmbbox.get()
+            bookdata["location"] = self.loc_cmbbox.get()
             print(bookdata)
             conf = messagebox.askokcancel("Confirmation", "Upload '{}'?".format(bookdata["title"]))
             if conf:
@@ -288,12 +306,22 @@ class App(ctk.CTk):
         """Method to add new shelf to option of locations."""
         # wait for input
         dialog = ctk.CTkInputDialog(title="Enter location name", text="Enter the name of new location.")
-        item = dialog.get_input().split()[0]
+        self.loc_cmbbox.configure(state="disabled")
+        self.loc_button.configure(state="disabled")
+        self.cam_cmbbox.configure(state="disabled")
+        input = dialog.get_input()
+
+        self.loc_cmbbox.configure(state="normal")
+        self.loc_button.configure(state="normal")
+        self.cam_cmbbox.configure(state="normal")
 
         # update combobox
-        self.loc_choice.append(item)
-        self.cmbbox.configure(values=self.loc_choice)
-        self.cmbbox.set(item)
+        if input:
+            item = input.split()[0]
+            if not item in self.loc_choice:
+                self.loc_choice.append(item)
+            self.loc_cmbbox.configure(values=self.loc_choice)
+            self.loc_cmbbox.set(item)
 
         print("Current locations: {}".format(self.loc_choice))
 
