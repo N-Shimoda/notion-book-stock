@@ -42,6 +42,7 @@ class App(ctk.CTk):
         self.geometry("1024x640")
 
         # --- variables ---
+        print("Initializing database...")
         self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
         self.history = self.db.get_isbn_list()
         self.loc_choice = self.db.get_location_tags()
@@ -119,7 +120,8 @@ class App(ctk.CTk):
             font=ctk.CTkFont(size=16),
             state="readonly",
         )
-        self.loc_cmbbox.set("新着図書")
+        if self.loc_choice:
+            self.loc_cmbbox.set(self.loc_choice[0])
         self.loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
 
         loc_label.pack(pady=5)

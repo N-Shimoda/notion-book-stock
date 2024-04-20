@@ -178,21 +178,52 @@ class NotionDB:
 
         return locations
 
+    def get_curr_location(self, isbn: int) -> list[str]:
+        """Method to get current location tag for the book with given isbn."""
+        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        res = requests.post(url, headers=self.headers)
+        with open("sample.json", "w") as f:
+            json.dump(res.json(), f, indent=4, ensure_ascii=False)
+        pass
+
     def save_bookdata(self, filename="bookdata.json"):
         """Method to save information about existing books into json."""
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
-        response = requests.post(url, headers=self.headers)
         result = {
             "databse_id": self.database_id, 
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total_items": 0,
             "books": []
         }
 
-        for obj in response.json()["results"]:
-            isbn = obj["properties"]["ISBN-13"]["number"]
-            loc = obj["properties"]["所蔵場所"]["select"]["name"]
-            title = obj["properties"]["名前"]["title"][0]["text"]["content"]
-            result["books"].append(dict(isbn=isbn, title=title, location=loc))
+        # query params
+        has_more = True
+        start_cursor = None
+        i = 0
+
+        while has_more:
+            print("Fetching books {}-{}".format(100*i, 100*i+99))
+
+            if start_cursor:
+                res = requests.post(url, headers=self.headers, json=dict(start_cursor=start_cursor))
+            else:
+                res = requests.post(url, headers=self.headers)
+
+            if res.status_code != 200:
+                raise ValueError("Failed in API call.")
+
+            has_more = res.json()["has_more"]
+            start_cursor = res.json()["next_cursor"]
+
+            for obj in res.json()["results"]:
+                isbn = obj["properties"]["ISBN-13"]["number"]
+                loc = obj["properties"]["所蔵場所"]["select"]["name"]
+                title = obj["properties"]["名前"]["title"][0]["text"]["content"]
+                result["books"].append(dict(isbn=isbn, title=title, location=loc))
+            
+            i += 1
+
+        result["total_items"] = len(result["books"])
 
         with open(filename, "w") as f:
             json.dump(result, f, indent=4, ensure_ascii=False)
@@ -201,6 +232,7 @@ class NotionDB:
 if __name__ == "__main__":
 
     db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")  # books in lab
+    # db.get_curr_location(isbn=9784537214192)
     db.save_bookdata()
 
     # db.create_book_page(
