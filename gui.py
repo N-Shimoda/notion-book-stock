@@ -14,8 +14,8 @@ from src.google_books import search_isbn
 from src.notion import NotionDB, NotionPage
 
 # modify these values when creating new release
-VERSION = "v1.3"
-RELEASED_DATE = "2024-04-16"
+VERSION = "v1.4"
+RELEASED_DATE = "2024-04-20"
 
 
 def is_valid_ISBN(value: str) -> bool:
