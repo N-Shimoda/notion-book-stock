@@ -183,8 +183,19 @@ class NotionDB(NotionObject):
 
         return locations
 
-    def get_curr_location(self, isbn: int) -> list[str]:
-        """Method to get current location tag for the book with given isbn."""
+    def get_existing_pageid(self, isbn: int) -> list[str]:
+        """
+        Method to get existing page ids for the book with given isbn.
+
+        Parameters
+        ----------
+        isbn: int
+
+        Returns
+        -------
+        ids: list[str]
+            List of page ids for the given book.
+        """
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
         filter = {
             "property": "ISBN-13",
@@ -193,9 +204,13 @@ class NotionDB(NotionObject):
             } 
         }
         res = requests.post(url, headers=self.headers, json=dict(filter=filter))
-        with open("sample.json", "w") as f:
-            json.dump(res.json(), f, indent=4, ensure_ascii=False)
-        pass
+        pages_data = res.json()["results"]
+        ids = []
+        if len(pages_data) > 0:
+            for pg in pages_data:
+                ids.append(pg["id"])
+        
+        return ids
 
     def save_bookdata(self, filename="bookdata.json"):
         """Method to save information about existing books into json."""
@@ -246,6 +261,13 @@ class NotionPage(NotionObject):
         super().__init__()
         self.page_id = page_id
 
+    def get_location_tag(self) -> str:
+        """Method to acquire location tag."""
+        url = f"https://api.notion.com/v1/pages/{self.page_id}"
+        res = requests.get(url, headers=self.headers)
+        tag = res.json()["properties"]["所蔵場所"]["select"]["name"]
+        return tag
+
     def update_location(self, loc: str):
         """
         Method to update location of the book.
@@ -266,11 +288,17 @@ class NotionPage(NotionObject):
 
 if __name__ == "__main__":
 
-    pg = NotionPage(page_id="756baa14-53fa-441f-b35d-a088a67658df")
-    pg.update_location()
+    # pg = NotionPage(page_id="756baa14-53fa-441f-b35d-a088a67658df")
+    # pg.update_location()
 
-    # db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")  # books in lab
-    # db.get_curr_location(isbn=9784537214192)
+    db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")  # books in lab
+    ids = db.get_existing_pageid(9780262693073)
+    print(ids)
+
+    if len(ids) > 0: 
+        pg = NotionPage(ids[0])
+        tag = pg.get_location_tag()
+        print(tag)
     # db.save_bookdata()
 
     # db.create_book_page(

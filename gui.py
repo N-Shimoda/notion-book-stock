@@ -11,7 +11,7 @@ from pyzbar.pyzbar import decode
 
 from src.github import get_latest_tag
 from src.google_books import search_isbn
-from src.notion import NotionDB
+from src.notion import NotionDB, NotionPage
 
 # modify these values when creating new release
 VERSION = "v1.3"
@@ -166,15 +166,30 @@ class App(ctk.CTk):
 
             # check existing books
             if isbn in self.history:
-                add_book = messagebox.askyesno(
+                ids = self.db.get_existing_pageid(isbn)
+                tags = []
+                for page_id in ids:
+                    pg = NotionPage(page_id)
+                    tags.append(pg.get_location_tag())
+                yesno = messagebox.askyesno(
                     "Book already added",
-                    "This book has been added. Are you sure to upload ISBN {} again?".format(isbn),
+                    "This book already exists in databse. "\
+                    "Do you want to update location tag?\n{}→{}".format(tags[0], self.loc_cmbbox.get()),
                 )
+                mode = "update" if yesno else "skip"
             else:
-                add_book = isbn is not None
+                mode = "add" if isbn is not None else "skip"
 
-            if add_book:
-                self.upload_book(isbn)
+            match mode:
+                case "add":
+                    self.upload_book(isbn)
+                case "update":
+                    pg = NotionPage(page_id=ids[0])
+                    pg.update_location(loc=self.loc_cmbbox.get())
+                case "skip":
+                    pass
+                case _:
+                    raise ValueError("Variable 'mode' has to be 'add', 'update' or 'skip'.")
 
         self.after(self.delay, self.update_canvas)
 
