@@ -122,7 +122,13 @@ class App(ctk.CTk):
         )
         if self.loc_choice:
             self.loc_cmbbox.set(self.loc_choice[0])
-        self.loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
+        self.loc_button = ctk.CTkButton(
+            self.loc_frame,
+            text="Add location",
+            command=self.add_location_Cb,
+            width=100,
+            font=ctk.CTkFont(size=16)
+        )
 
         loc_label.pack(pady=5)
         self.loc_cmbbox.pack(padx=20)
