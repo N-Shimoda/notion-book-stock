@@ -41,12 +41,7 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("dark")
         self.geometry("1024x640")
 
-        # --- variables ---
-        print("Initializing database...")
-        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
-        self.history = self.db.get_isbn_list()
-        self.loc_choice = self.db.get_location_tags()
-
+        # --- API key & camera setup ---
         try:
             # create '.env' file if not exists
             if not load_dotenv():
@@ -71,28 +66,36 @@ class App(ctk.CTk):
                     break
             assert len(self.available_cam) != 0, "No video source detected."
 
-            # start video capturing
-            self.vcap = cv2.VideoCapture(self.available_cam[0])
-            self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
-            self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-
-            # --- create GUI ---
-            self.create_frames()
-            self.create_widgets()
-
             # --- check updates ---
             if not self.check_latest_release():
                 raise ValueError(
                     "Please get the latest version from GitHub (https://github.com/N-Shimoda/notion-book-stock)."
                 )
 
-            # --- display camera frame ---
-            self.delay = 40  # ms
-            self.update_canvas()
         except BaseException as e:
             print(type(e))
             print(e)
             exit()
+
+        # --- Notion database ---
+        print("Initializing database...")
+        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
+        self.history = self.db.get_isbn_list()
+        self.loc_choice = self.db.get_location_tags()
+        print("Done!")
+        
+        # start video capturing
+        self.vcap = cv2.VideoCapture(self.available_cam[0])
+        self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        
+        # --- create GUI ---
+        self.create_frames()
+        self.create_widgets()
+
+        # display camera canvas
+        self.delay = 40  # ms
+        self.update_canvas()
 
     def create_frames(self):
         """Method to create frames."""
