@@ -235,11 +235,13 @@ class App(ctk.CTk):
                 if res.status_code == 200:
                     print("Successfully added.")
                     self.history.append(isbn)
-                if res.status_code != 200:
-                    print("Request failed. Maybe API key is outdated.")
-                    print(f"Response Status Code: {res.status_code}")
-                if res.status_code == 401:
+                elif res.status_code == 401:
                     self.set_api(prompt="Update API key of Notion:")
+                else:
+                    messagebox.showerror(title=res.reason, message=res.text)
+                    print("Request failed.")
+                    print(res.json())
+                
         else:
             messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
 
