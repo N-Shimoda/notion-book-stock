@@ -4,6 +4,7 @@ os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 from tkinter import messagebox, simpledialog
 
 import customtkinter as ctk
+import tkinter as tk
 import cv2
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, ImageTk
@@ -38,8 +39,10 @@ class App(ctk.CTk):
 
         # --- settings ---
         self.title("Notion Book Stock")
-        ctk.set_appearance_mode("dark")
         self.geometry("1024x640")
+        ctk.set_appearance_mode("dark")
+        icon_img = tk.PhotoImage(file="icons/books.png")
+        self.iconphoto(False, icon_img)
 
         # --- API key & camera setup ---
         try:
