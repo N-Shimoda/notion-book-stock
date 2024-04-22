@@ -41,7 +41,7 @@ class App(ctk.CTk):
         self.title("Notion Book Stock")
         self.geometry("1024x640")
         ctk.set_appearance_mode("dark")
-        icon_img = tk.PhotoImage(file="icons/books.png")
+        icon_img = tk.PhotoImage(file="icons/book-eyecatch.png")
         self.iconphoto(False, icon_img)
 
         # --- API key & camera setup ---
