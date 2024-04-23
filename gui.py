@@ -238,9 +238,12 @@ class App(ctk.CTk):
                 elif res.status_code == 401:
                     self.set_api(prompt="Update API key of Notion:")
                 else:
-                    messagebox.showerror(title=res.reason, message=res.text)
                     print("Request failed.")
                     print(res.json())
+                    messagebox.showerror(
+                        title=res.json()["code"],
+                        message=res.json()["code"] + "\n" + res.json()["message"]
+                    )
                 
         else:
             messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
