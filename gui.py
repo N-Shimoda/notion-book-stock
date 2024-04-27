@@ -83,7 +83,7 @@ class App(ctk.CTk):
         # --- Notion database ---
         print("Initializing database...")
         self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
-        self.history = self.db.get_isbn_list()
+        self.history = [data["isbn"] for data in self.db.save_bookdata()["books"]]
         self.loc_choice = self.db.get_location_tags()
         print("Done!")
         
@@ -235,11 +235,16 @@ class App(ctk.CTk):
                 if res.status_code == 200:
                     print("Successfully added.")
                     self.history.append(isbn)
-                if res.status_code != 200:
-                    print("Request failed. Maybe API key is outdated.")
-                    print(f"Response Status Code: {res.status_code}")
-                if res.status_code == 401:
+                elif res.status_code == 401:
                     self.set_api(prompt="Update API key of Notion:")
+                else:
+                    print("Request failed.")
+                    print(res.json())
+                    messagebox.showerror(
+                        title=res.json()["code"],
+                        message=res.json()["code"] + "\n" + res.json()["message"]
+                    )
+                
         else:
             messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
 
