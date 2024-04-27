@@ -83,7 +83,7 @@ class App(ctk.CTk):
         # --- Notion database ---
         print("Initializing database...")
         self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
-        self.history = self.db.get_isbn_list()
+        self.history = [data["isbn"] for data in self.db.save_bookdata()["books"]]
         self.loc_choice = self.db.get_location_tags()
         print("Done!")
         
