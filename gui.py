@@ -4,6 +4,7 @@ os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 from tkinter import messagebox, simpledialog
 
 import customtkinter as ctk
+import tkinter as tk
 import cv2
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, ImageTk
@@ -38,15 +39,12 @@ class App(ctk.CTk):
 
         # --- settings ---
         self.title("Notion Book Stock")
-        ctk.set_appearance_mode("dark")
         self.geometry("1024x640")
+        ctk.set_appearance_mode("dark")
+        icon_img = tk.PhotoImage(file="icons/book-eyecatch.png")
+        self.iconphoto(False, icon_img)
 
-        # --- variables ---
-        print("Initializing database...")
-        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
-        self.history = self.db.get_isbn_list()
-        self.loc_choice = self.db.get_location_tags()
-
+        # --- API key & camera setup ---
         try:
             # create '.env' file if not exists
             if not load_dotenv():
@@ -71,28 +69,36 @@ class App(ctk.CTk):
                     break
             assert len(self.available_cam) != 0, "No video source detected."
 
-            # start video capturing
-            self.vcap = cv2.VideoCapture(self.available_cam[0])
-            self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
-            self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-
-            # --- create GUI ---
-            self.create_frames()
-            self.create_widgets()
-
             # --- check updates ---
             if not self.check_latest_release():
                 raise ValueError(
                     "Please get the latest version from GitHub (https://github.com/N-Shimoda/notion-book-stock)."
                 )
 
-            # --- display camera frame ---
-            self.delay = 40  # ms
-            self.update_canvas()
         except BaseException as e:
             print(type(e))
             print(e)
             exit()
+
+        # --- Notion database ---
+        print("Initializing database...")
+        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
+        self.history = [data["isbn"] for data in self.db.save_bookdata()["books"]]
+        self.loc_choice = self.db.get_location_tags()
+        print("Done!")
+        
+        # start video capturing
+        self.vcap = cv2.VideoCapture(self.available_cam[0])
+        self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        
+        # --- create GUI ---
+        self.create_frames()
+        self.create_widgets()
+
+        # display camera canvas
+        self.delay = 40  # ms
+        self.update_canvas()
 
     def create_frames(self):
         """Method to create frames."""
@@ -122,7 +128,13 @@ class App(ctk.CTk):
         )
         if self.loc_choice:
             self.loc_cmbbox.set(self.loc_choice[0])
-        self.loc_button = ctk.CTkButton(self.loc_frame, text="Add location", command=self.add_location_Cb, width=100)
+        self.loc_button = ctk.CTkButton(
+            self.loc_frame,
+            text="Add location",
+            command=self.add_location_Cb,
+            width=100,
+            font=ctk.CTkFont(size=16)
+        )
 
         loc_label.pack(pady=5)
         self.loc_cmbbox.pack(padx=20)
@@ -223,11 +235,16 @@ class App(ctk.CTk):
                 if res.status_code == 200:
                     print("Successfully added.")
                     self.history.append(isbn)
-                if res.status_code != 200:
-                    print("Request failed. Maybe API key is outdated.")
-                    print(f"Response Status Code: {res.status_code}")
-                if res.status_code == 401:
+                elif res.status_code == 401:
                     self.set_api(prompt="Update API key of Notion:")
+                else:
+                    print("Request failed.")
+                    print(res.json())
+                    messagebox.showerror(
+                        title=res.json()["code"],
+                        message=res.json()["code"] + "\n" + res.json()["message"]
+                    )
+                
         else:
             messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
 

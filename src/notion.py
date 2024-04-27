@@ -89,11 +89,13 @@ class NotionDB(NotionObject):
 
         # description
         if description:
+            if len(description) > 2000:
+                print("len(description) was over 2000 ({})".format(len(description)))
             payload["children"].append(
                 {
                     "object": "block",
                     "type": "quote",
-                    "quote": {"rich_text": [{"type": "text", "text": {"content": description}}]},
+                    "quote": {"rich_text": [{"type": "text", "text": {"content": description[:2000-4] + " ..."}}]},
                 }
             )
         else:
@@ -213,10 +215,30 @@ class NotionDB(NotionObject):
         return ids
 
     def save_bookdata(self, filename="bookdata.json"):
-        """Method to save information about existing books into json."""
+        """
+        Method to save information about existing books into json.
+
+        Parameters
+        ----------
+        filename: str
+            Relative path of output file.
+
+        Returns
+        -------
+        result: dict
+            Data of current books in Notion database.
+            `result` has folloting keys:
+            - `databse_id`: str
+            - `date`: str
+            - `total_items`: int
+            - `books`: dict
+                + `isbn`: int
+                + `title`: str
+                + `location`: str
+        """
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
         result = {
-            "databse_id": self.database_id, 
+            "database_id": self.database_id, 
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "total_items": 0,
             "books": []
@@ -253,6 +275,8 @@ class NotionDB(NotionObject):
 
         with open(filename, "w") as f:
             json.dump(result, f, indent=4, ensure_ascii=False)
+
+        return result
 
 
 class NotionPage(NotionObject):
