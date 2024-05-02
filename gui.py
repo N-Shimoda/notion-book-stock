@@ -185,7 +185,7 @@ class App(ctk.CTk):
                     tags.append(pg.get_location_tag())
                 yesno = messagebox.askyesno(
                     "Book already added",
-                    "This book already exists in databse. "\
+                    "This book already exists in database. "\
                     "Do you want to update location tag?\n{}→{}".format(tags[0], self.loc_cmbbox.get()),
                 )
                 mode = "update" if yesno else "skip"
@@ -218,7 +218,7 @@ class App(ctk.CTk):
 
     def upload_book(self, isbn: int):
         """
-        Method to upload given book (ISBN) to Notion databse.
+        Method to upload given book (ISBN) to Notion database.
 
         Parameters
         ----------

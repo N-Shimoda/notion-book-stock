@@ -91,11 +91,12 @@ class NotionDB(NotionObject):
         if description:
             if len(description) > 2000:
                 print("len(description) was over 2000 ({})".format(len(description)))
+                description = description[:2000-4] + " ..."
             payload["children"].append(
                 {
                     "object": "block",
                     "type": "quote",
-                    "quote": {"rich_text": [{"type": "text", "text": {"content": description[:2000-4] + " ..."}}]},
+                    "quote": {"rich_text": [{"type": "text", "text": {"content": description}}]},
                 }
             )
         else:
