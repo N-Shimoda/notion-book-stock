@@ -1,4 +1,4 @@
-"""https://imagingsolution.net/program/python/tkinter/display_opencv_video_canvas/ より"""
+"""From https://imagingsolution.net/program/python/tkinter/display_opencv_video_canvas/"""
 
 import tkinter as tk
 
