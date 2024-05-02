@@ -17,7 +17,7 @@ class NotionObject:
             "Content-Type": "application/json",
         }
 
-    def set_api_key(self, name: str) -> str:
+    def set_api_key(self, name="NOTION_API_KEY", reset=False) -> str:
         """
         Method to set API key from environment variable.
         If key was not bounded, this function asks the user to enter it.
@@ -26,19 +26,21 @@ class NotionObject:
         ----------
         name: str
             Name of environment variable.
+        reset: bool
+            Set True if you want to reset the API key.
 
         Return
         ------
         api_key: str
         """
         api_key = os.environ.get(name)
-        if api_key is not None:
-            return api_key
-        else:
+        if reset or api_key is None:
             api_key = getpass("Enter Notion API key: ")
             os.environ[name] = api_key
             return api_key
-
+        else:
+            return api_key
+            
 
 class NotionDB(NotionObject):
     """Class for handling Notion database."""
@@ -290,7 +292,11 @@ class NotionPage(NotionObject):
         """Method to acquire location tag."""
         url = f"https://api.notion.com/v1/pages/{self.page_id}"
         res = requests.get(url, headers=self.headers)
-        tag = res.json()["properties"]["所蔵場所"]["select"]["name"]
+        if res.status_code == 200:
+            tag = res.json()["properties"]["所蔵場所"]["select"]["name"]
+        else:
+            tag = None
+            print("Error: {}".format(res.json()))
         return tag
 
     def update_location(self, loc: str):
@@ -309,6 +315,31 @@ class NotionPage(NotionObject):
         res = requests.patch(url, headers=self.headers, json=dict(properties=properties))
         if res.status_code != 200:
             raise ValueError("Failed in API call.")
+
+    def get_block_ids(self) -> list[str]:
+        """
+        Method to get block ids in the page.
+
+        Returns
+        -------
+        ids: list[str]
+            List of block ids.
+        """
+        url = f"https://api.notion.com/v1/blocks/{self.page_id}/children"
+        res = requests.get(url, headers=self.headers)
+        ids = [d["id"] for d in res.json()["results"]]
+        return ids
+    
+    def update_children(self):
+        """Method to update page content."""
+        # delete existing blocks
+        for id in self.get_block_ids():
+            url = f"https://api.notion.com/v1/blocks/{id}"
+            res = requests.delete(url, headers=self.headers)
+            print(res.status_code)
+
+        # append new blocks
+        pass
 
 
 if __name__ == "__main__":
