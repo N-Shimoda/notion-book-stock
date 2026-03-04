@@ -261,8 +261,10 @@ class NotionDB(NotionObject):
 
             for obj in res.json()["results"]:
                 isbn = obj["properties"]["ISBN-13"]["number"]
-                loc = obj["properties"]["所蔵場所"]["select"]["name"]
-                title = obj["properties"]["名前"]["title"][0]["text"]["content"]
+                loc_select = obj["properties"]["所蔵場所"].get("select")
+                loc = loc_select["name"] if loc_select else None
+                title_list = obj["properties"]["名前"]["title"]
+                title = title_list[0]["text"]["content"] if title_list else None
                 result["books"].append(dict(isbn=isbn, title=title, location=loc))
 
             i += 1
@@ -286,7 +288,8 @@ class NotionPage(NotionObject):
         """Method to acquire location tag."""
         url = f"https://api.notion.com/v1/pages/{self.page_id}"
         res = requests.get(url, headers=self.headers)
-        tag = res.json()["properties"]["所蔵場所"]["select"]["name"]
+        loc_select = res.json()["properties"]["所蔵場所"].get("select")
+        tag = loc_select["name"] if loc_select else None
         return tag
 
     def update_location(self, loc: str):
