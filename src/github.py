@@ -1,5 +1,6 @@
 import requests
 
+
 def get_latest_tag(repo_owner: str, repo_name: str) -> str | None:
     """
     Function to get the latest tag name of the specified GitHub repository.
@@ -27,8 +28,9 @@ def get_latest_tag(repo_owner: str, repo_name: str) -> str | None:
         print(f"Failed to fetch latest release info. Status code: {response.status_code}")
         return None, None
 
+
 if __name__ == "__main__":
-    
+
     repo_owner = "N-Shimoda"
     repo_name = "notion-book-stock"
     VERSION = "v1.1"
@@ -36,4 +38,4 @@ if __name__ == "__main__":
     latest_tag, release_date = get_latest_tag(repo_owner, repo_name)
     if latest_tag:
         print("Latest tag: '{}' (released on {})".format(latest_tag, release_date))
-        print(latest_tag==VERSION)
+        print(latest_tag == VERSION)

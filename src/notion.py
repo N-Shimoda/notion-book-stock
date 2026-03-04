@@ -2,8 +2,8 @@
 import json
 import os
 import time
-from getpass import getpass
 from datetime import datetime
+from getpass import getpass
 
 import requests
 
@@ -91,7 +91,7 @@ class NotionDB(NotionObject):
         if description:
             if len(description) > 2000:
                 print("len(description) was over 2000 ({})".format(len(description)))
-                description = description[:2000-4] + " ..."
+                description = description[: 2000 - 4] + " ..."
             payload["children"].append(
                 {
                     "object": "block",
@@ -181,7 +181,7 @@ class NotionDB(NotionObject):
         locations = []
         for item in options_data:
             loc = item["name"]
-            if not item in locations:
+            if item not in locations:
                 locations.append(loc)
 
         return locations
@@ -200,19 +200,14 @@ class NotionDB(NotionObject):
             List of page ids for the given book.
         """
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
-        filter = {
-            "property": "ISBN-13",
-            "number": {
-                "equals": isbn
-            } 
-        }
+        filter = {"property": "ISBN-13", "number": {"equals": isbn}}
         res = requests.post(url, headers=self.headers, json=dict(filter=filter))
         pages_data = res.json()["results"]
         ids = []
         if len(pages_data) > 0:
             for pg in pages_data:
                 ids.append(pg["id"])
-        
+
         return ids
 
     def save_bookdata(self, filename="bookdata.json"):
@@ -239,10 +234,10 @@ class NotionDB(NotionObject):
         """
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
         result = {
-            "database_id": self.database_id, 
+            "database_id": self.database_id,
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "total_items": 0,
-            "books": []
+            "books": [],
         }
 
         # query params
@@ -251,7 +246,7 @@ class NotionDB(NotionObject):
         i = 0
 
         while has_more:
-            print("Fetching books {}-{}".format(100*i, 100*i+99))
+            print("Fetching books {}-{}".format(100 * i, 100 * i + 99))
 
             if start_cursor:
                 res = requests.post(url, headers=self.headers, json=dict(start_cursor=start_cursor))
@@ -269,7 +264,7 @@ class NotionDB(NotionObject):
                 loc = obj["properties"]["所蔵場所"]["select"]["name"]
                 title = obj["properties"]["名前"]["title"][0]["text"]["content"]
                 result["books"].append(dict(isbn=isbn, title=title, location=loc))
-            
+
             i += 1
 
         result["total_items"] = len(result["books"])
@@ -282,6 +277,7 @@ class NotionDB(NotionObject):
 
 class NotionPage(NotionObject):
     """Class for handling Notion Page object."""
+
     def __init__(self, page_id: str) -> None:
         super().__init__()
         self.page_id = page_id
@@ -296,16 +292,14 @@ class NotionPage(NotionObject):
     def update_location(self, loc: str):
         """
         Method to update location of the book.
-        
+
         Parameters
         ----------
         loc: str
             Name of new location tag.
         """
         url = f"https://api.notion.com/v1/pages/{self.page_id}"
-        properties = {
-            "所蔵場所": {"select": {"name": loc}}
-        }
+        properties = {"所蔵場所": {"select": {"name": loc}}}
         res = requests.patch(url, headers=self.headers, json=dict(properties=properties))
         if res.status_code != 200:
             raise ValueError("Failed in API call.")
@@ -320,7 +314,7 @@ if __name__ == "__main__":
     ids = db.get_existing_pageid(9780262693073)
     print(ids)
 
-    if len(ids) > 0: 
+    if len(ids) > 0:
         pg = NotionPage(ids[0])
         tag = pg.get_location_tag()
         print(tag)
