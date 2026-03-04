@@ -4,7 +4,7 @@ from tkinter import messagebox, simpledialog
 
 import customtkinter as ctk
 import cv2
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 from PIL import Image, ImageOps, ImageTk
 from pyzbar.pyzbar import decode
 
@@ -46,11 +46,19 @@ class App(ctk.CTk):
 
         # --- API key & camera setup ---
         try:
-            # create '.env' file if not exists
-            if not load_dotenv():
+            # create '.env' file if not exists, then load it
+            if not os.path.exists(".env"):
                 self.create_dotenv()
-                self.set_api()
+            load_dotenv()
 
+            if os.getenv("NOTION_DATABASE_ID") is None:
+                self.set_database_id()
+            assert (
+                os.getenv("NOTION_DATABASE_ID") is not None
+            ), "Environment variable 'NOTION_DATABASE_ID' doesn't exist."
+
+            if os.getenv("NOTION_API_KEY") is None:
+                self.set_api()
             assert os.getenv("NOTION_API_KEY") is not None, "Environment variable 'NOTION_API_KEY' doesn't exist."
 
             # get available camera(s)
@@ -82,7 +90,7 @@ class App(ctk.CTk):
 
         # --- Notion database ---
         print("Initializing database...")
-        self.db = NotionDB(databse_id="3dacfb355eb34f0b9d127a988539809a")
+        self.db = NotionDB(databse_id=os.getenv("NOTION_DATABASE_ID"))
         self.history = [data["isbn"] for data in self.db.save_bookdata()["books"]]
         self.loc_choice = self.db.get_location_tags()
         print("Done!")
@@ -280,10 +288,22 @@ class App(ctk.CTk):
             print("Environment variable 'NOTION_API_KEY' already exists.")
         api_key = simpledialog.askstring(title, prompt, show="*")
         if api_key is not None:
-            with open(".env", "w", encoding="utf-8") as f:
-                f.write(f"NOTION_API_KEY={api_key}")
+            set_key(".env", "NOTION_API_KEY", api_key)
             load_dotenv(override=True)
             print("API key has been successfully set.")
+        else:
+            print("Canceled.")
+            exit()
+
+    def set_database_id(self, title="Database ID config", prompt="Enter Notion Database ID:"):
+        """
+        Method to set Notion database ID via a dialog window.
+        """
+        db_id = simpledialog.askstring(title, prompt)
+        if db_id is not None:
+            set_key(".env", "NOTION_DATABASE_ID", db_id)
+            load_dotenv(override=True)
+            print("Database ID has been successfully set.")
         else:
             print("Canceled.")
             exit()
