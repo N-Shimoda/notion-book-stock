@@ -1,10 +1,8 @@
 import os
-
-os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
+import tkinter as tk
 from tkinter import messagebox, simpledialog
 
 import customtkinter as ctk
-import tkinter as tk
 import cv2
 from dotenv import load_dotenv
 from PIL import Image, ImageOps, ImageTk
@@ -13,6 +11,8 @@ from pyzbar.pyzbar import decode
 from src.github import get_latest_tag
 from src.google_books import search_isbn
 from src.notion import NotionDB, NotionPage
+
+os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 
 # modify these values when creating new release
 VERSION = "v1.5.1"
@@ -29,7 +29,7 @@ def is_valid_ISBN(value: str) -> bool:
             return True
         else:
             return False
-    except:
+    except ValueError:
         return False
 
 
@@ -86,12 +86,12 @@ class App(ctk.CTk):
         self.history = [data["isbn"] for data in self.db.save_bookdata()["books"]]
         self.loc_choice = self.db.get_location_tags()
         print("Done!")
-        
+
         # start video capturing
         self.vcap = cv2.VideoCapture(self.available_cam[0])
         self.vwidth = self.vcap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.vheight = self.vcap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        
+
         # --- create GUI ---
         self.create_frames()
         self.create_widgets()
@@ -129,11 +129,7 @@ class App(ctk.CTk):
         if self.loc_choice:
             self.loc_cmbbox.set(self.loc_choice[0])
         self.loc_button = ctk.CTkButton(
-            self.loc_frame,
-            text="Add location",
-            command=self.add_location_Cb,
-            width=100,
-            font=ctk.CTkFont(size=16)
+            self.loc_frame, text="Add location", command=self.add_location_Cb, width=100, font=ctk.CTkFont(size=16)
         )
 
         loc_label.pack(pady=5)
@@ -185,7 +181,7 @@ class App(ctk.CTk):
                     tags.append(pg.get_location_tag())
                 yesno = messagebox.askyesno(
                     "Book already added",
-                    "This book already exists in database. "\
+                    "This book already exists in database. "
                     "Do you want to update location tag?\n{}→{}".format(tags[0], self.loc_cmbbox.get()),
                 )
                 mode = "update" if yesno else "skip"
@@ -241,10 +237,9 @@ class App(ctk.CTk):
                     print("Request failed.")
                     print(res.json())
                     messagebox.showerror(
-                        title=res.json()["code"],
-                        message=res.json()["code"] + "\n" + res.json()["message"]
+                        title=res.json()["code"], message=res.json()["code"] + "\n" + res.json()["message"]
                     )
-                
+
         else:
             messagebox.showerror(message="No book found for ISBN: {}".format(isbn))
 
@@ -335,7 +330,7 @@ class App(ctk.CTk):
         # update combobox
         if input:
             item = input.split()[0]
-            if not item in self.loc_choice:
+            if item not in self.loc_choice:
                 self.loc_choice.append(item)
             self.loc_cmbbox.configure(values=self.loc_choice)
             self.loc_cmbbox.set(item)
