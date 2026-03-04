@@ -1,4 +1,9 @@
+# Python
 __pycache__
-.env
-kakisute.py
+
+# Data
 bookdata.json
+.env
+
+# IDE
+.vscode/
